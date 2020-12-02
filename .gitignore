@@ -2,3 +2,5 @@
 /figs
 /clf
 /old_notebooks
+.ipynb_checkpoints
+.vscode
