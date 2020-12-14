@@ -1,5 +1,5 @@
-# Induced-bias-experiment
-induced bias experiment for deepnet paper
+# Inductive Bias Experiment
+inductive bias experiment for deepnet paper
 
 TODO:
 - [ ] implement spiral posterior
