@@ -2,9 +2,9 @@
 induced bias experiment for deepnet paper
 
 TODO:
-- [ ] implement spiral posterior 
+- [ ] implement spiral posterior
 
-12/09/20 <br>
+12/14/20 <br>
 - [x] remove KNN and XGBoost from the figure
 
 12/08/20 <br>
