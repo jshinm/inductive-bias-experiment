@@ -4,6 +4,15 @@ inductive bias experiment for deepnet paper
 TODO:
 - [ ] implement spiral posterior
 
+12/20/20 <br>
+
+1. plot on the top row: class 1 likelihood, sample data, class 1 posterior
+2. plot on bottom row: 3 estimated posteriors
+3. make all the plots circular with radius 4
+4. top row: show class 1 posterior curves
+5. bottom row: show class 1 hellinger distance curves
+6. for the posterior estimates, label with alg name & their mean hellinger distance
+
 12/14/20 <br>
 - [x] remove KNN and XGBoost from the figure
 
