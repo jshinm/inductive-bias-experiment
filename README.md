@@ -8,6 +8,7 @@ TODO:
 - [x] extract the estimated posterior along the line at 135 degree
 - [x] draw line plot of the mean estimated posterior along the line
 - [x] plot pre-activation & post-activation of the MLP model (i.e. activation of the last output layer)
+- [x] draw line plot of the mean estimated posterior along the line (between pre-post activation of MLP)
 
 12/30/20 <br>
 - [x] implement spiral posterior
