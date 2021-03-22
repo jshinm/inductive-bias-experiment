@@ -4,6 +4,9 @@ inductive bias experiment for deepnet paper
 TODO:
 - N/A
 
+3/xx/21 <br>
+- [ ] translate codes in an object-oriented manner
+
 3/16/21 <br>
 - [x] extract the estimated posterior along the line at 135 degree
 - [x] draw line plot of the mean estimated posterior along the line
