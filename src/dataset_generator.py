@@ -17,18 +17,19 @@ class DatasetGenerator:
         return R
 
     @staticmethod
-    def generate_gaussian_parity(n, mean=np.array([-1, -1]), cov_scale=1, angle_params=None, k=1, acorn=None, contain=True, cc=False):
+    def generate_gaussian_parity(n, mean=np.array([-1, -1]), cov_scale=1, angle_params=None, k=1, acorn=None, contain=True, cc=False, train=True):
         if acorn is not None:
             np.random.seed(acorn)
             
         d = len(mean)
         lim = abs(mean[0])
-        
-        if mean[0] == -1 and mean[1] == -1:
-            mean = mean + 1 / 2**k
-        elif mean[0] == -2 and mean[1] == -2:
-            mean = mean + 1
-        
+        if train:
+            unitBound = 1
+        else:
+            unitBound = lim
+
+        mean = mean + 0.5 * abs(mean[0]) #adjusting gaussian center
+
         mnt = np.random.multinomial(n, 1/(4**k) * np.ones(4**k))
         cumsum = np.cumsum(mnt)
         cumsum = np.concatenate(([0], cumsum))
@@ -40,38 +41,33 @@ class DatasetGenerator:
             for j in range(2**k):
                 temp = np.random.multivariate_normal(mean, cov_scale * np.eye(d), 
                                                     size=mnt[i*(2**k) + j])
-                if abs(mean[0]) == 0.5:
-                    temp[:, 0] += i*(1/2**(k-1))
-                    temp[:, 1] += j*(1/2**(k-1))
-                    
-                elif abs(mean[0]) == 1:
-                    temp[:, 0] += i*2
-                    temp[:, 1] += j*2
+                temp[:, 0] += i*lim
+                temp[:, 1] += j*lim
 
                 # screen out values outside the boundary
                 if contain:
                     if cc:
                     # circular bbox
-                        idx_oob = np.where(np.sqrt((temp**2).sum(axis=1)) > lim)
+                        idx_oob = np.where(np.sqrt((temp**2).sum(axis=1)) > unitBound)
 
                         for l in idx_oob:
                             
                             while True:
                                 temp2 = np.random.multivariate_normal(mean, cov_scale * np.eye(d), size=1)
 
-                                if np.sqrt((temp2**2).sum(axis=1)) < lim:
+                                if np.sqrt((temp2**2).sum(axis=1)) < unitBound:
                                     temp[l] = temp2
                                     break
                     else: 
                     # square bbox
-                        idx_oob = np.where(abs(temp) > lim)
+                        idx_oob = np.where(abs(temp) > unitBound)
                         
                         for l in idx_oob:
                             
                             while True:
                                 temp2 = np.random.multivariate_normal(mean, cov_scale * np.eye(d), size=1)
 
-                                if (abs(temp2) < lim).all():
+                                if (abs(temp2) < unitBound).all():
                                     temp[l] = temp2
                                     break
                 
@@ -95,7 +91,7 @@ class DatasetGenerator:
         return X, Y.astype(int)
 
     @staticmethod
-    def generate_spirals(N, K=5, noise = 0.5, acorn = None, density=0.3, rng = 1):
+    def generate_spirals(N, K=5, noise = 0.5, acorn = None, density=0.3, rng=1):
 
         #N number of poinst per class
         #K number of classes
@@ -265,7 +261,6 @@ class DatasetGenerator:
     @staticmethod
     def pdf1(x, rotate=False, sig=0.25, rng=1):
         
-        # a, b, c, d, e, f, g = pdf_spiral(100, noise=0, K=2)
         x0, x1 = DatasetGenerator.spiral_center(120, K=2, rng=rng)
 
         mu01 = x0
@@ -384,7 +379,7 @@ class DatasetGenerator:
         return X[:,0],X[:,1],z
 
     @staticmethod
-    def generate_uniform_XOR(b=1, N=750, cc=False):
+    def generate_uniform_XOR(b=1, N=750, cc=False, train=True):
 
         boundary = np.random.multinomial(N, [1/4.]*4)
         bcum = np.cumsum(boundary)
@@ -393,6 +388,11 @@ class DatasetGenerator:
         Y = np.zeros(N)
         Y[bcum[0]:bcum[2]] = 1
         ol = 0.0 # degree of overlap
+
+        if train:
+            unitBound = 1
+        else:
+            unitBound = b
 
         for i in range(2):
             for j in range(2):
@@ -414,8 +414,7 @@ class DatasetGenerator:
 
                 if cc:
                     # circular bbox
-                    idx_oob = np.where(np.sqrt((temp**2).sum(axis=1)) > 1)
-                    # print(idx_oob)
+                    idx_oob = np.where(np.sqrt((temp**2).sum(axis=1)) > unitBound)
 
                     for l in idx_oob:
                         
@@ -433,7 +432,7 @@ class DatasetGenerator:
 
                             temp2 = np.c_[tempX,tempY]
 
-                            if np.sqrt((temp2**2).sum(axis=1)) < 1:
+                            if np.sqrt((temp2**2).sum(axis=1)) < unitBound:
                                 temp[l] = temp2
                                 break
 
