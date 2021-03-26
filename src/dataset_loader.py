@@ -6,12 +6,12 @@ from .dataset_generator import DatasetGenerator as DG
 
 class datasetLoader:
 
-    def __init__(self, cov, N=750, rng=3):
+    def __init__(self):
         # self.N = N #training sample size
         # self.train_rng = train_rng #training set range
         # self.test_rng  = test_rng #testing set range
 
-        mean = np.array([-rng,-rng])
+        
         # test_mean = np.array([-test_rng,-test_rng])
 
         self.train_X = [[] for i in range(5)]
@@ -24,47 +24,77 @@ class datasetLoader:
         self.Ctest_X = [[] for i in range(5)]
         self.Ctest_y = [[] for i in range(5)]
 
-        # gaussian XOR
-        i = 0
-        self.train_X[i], self.train_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi)
-        self.test_X[i], self.test_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov, angle_params=np.pi, train=False)
-        self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi, cc=True)
-        self.Ctest_X[i], self.Ctest_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov, angle_params=np.pi, cc=True, train=False)
+    def generate(self, N=100, cov=1, rng=1):
 
-        # gaussian R-XOR
-        i = 1
-        self.train_X[i], self.train_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi/4)
-        self.test_X[i], self.test_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov, angle_params=np.pi/4, train=False)
-        self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi/4, cc=True)
-        self.Ctest_X[i], self.Ctest_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov, angle_params=np.pi/4, cc=True, train=False)
+        mean = np.array([-rng,-rng])
 
-        # gaussian S-XOR
-        i = 2
-        self.train_X[i], self.train_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=0.01, angle_params=np.pi)
-        self.test_X[i], self.test_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=0.12, angle_params=np.pi, train=False)
-        self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=0.01, angle_params=np.pi, cc=True)
-        self.Ctest_X[i], self.Ctest_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=0.12, angle_params=np.pi, cc=True, train=False)
+        for i in range(5):
+
+            if i == 0: # gaussian XOR
+                args = {'n': N, 'mean': mean, 'cov_scale': cov/10, 'angle_params': np.pi}
+            elif i == 1: # gaussian R-XOR
+                args = {'n': N, 'mean': mean, 'cov_scale': cov/10, 'angle_params': np.pi/4}
+            elif i == 2: # gaussian S-XOR
+                args = {'n': N, 'mean': mean, 'cov_scale': cov/100, 'angle_params': np.pi}
+            elif i == 3: # gaussian U-XOR
+                args = {'N': N, 'b': rng}
+            elif i == 4: # gaussian Spiral
+                args = {'N': N, 'K': 2, 'noise': 1, 'density': 0.3, 'rng': rng}
+
+            if i == 3:
+                func = DG.generate_uniform_XOR
+            elif i == 4:
+                func = DG.generate_spirals
+            else:
+                func = DG.generate_gaussian_parity
+
+            self.train_X[i], self.train_y[i] = func(**args)
+            self.test_X[i], self.test_y[i] = func(**args)
+            self.Ctrain_X[i], self.Ctrain_y[i] = func(**args, cc=True)
+            self.Ctest_X[i], self.Ctest_y[i] = func(**args, cc=True)
+                
+        # # gaussian XOR
+        # i = 0
         
-        # gaussian U-XOR
-        i = 3
-        self.train_X[i], self.train_y[i] = DG.generate_uniform_XOR(b=rng)
-        self.test_X[i], self.test_y[i] = DG.generate_uniform_XOR(b=rng)
-        self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_uniform_XOR(b=rng, cc=True)
-        self.Ctest_X[i], self.Ctest_y[i] = DG.generate_uniform_XOR(b=rng, cc=True)
+        # self.train_X[i], self.train_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi)
+        # self.test_X[i], self.test_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi, train=False)
+        # self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi, cc=True)
+        # self.Ctest_X[i], self.Ctest_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi, cc=True, train=False)
 
-        # gaussian Spiral
-        i = 4
-        self.train_X[i], self.train_y[i] = DG.generate_spirals(N=N, K=2, noise=2.5, rng=rng)
-        self.test_X[i], self.test_y[i] = DG.generate_spirals(N=N, K=2, noise=2.5, rng=rng)
-        self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_spirals(N=N, K=2, noise=2.5, rng=rng)
-        self.Ctest_X[i], self.Ctest_y[i] = DG.generate_spirals(N=N, K=2, noise=2.5, rng=rng)
+        # # gaussian R-XOR
+        # i = 1
+        # self.train_X[i], self.train_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi/4)
+        # self.test_X[i], self.test_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi/4, train=False)
+        # self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi/4, cc=True)
+        # self.Ctest_X[i], self.Ctest_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/10, angle_params=np.pi/4, cc=True, train=False)
+
+        # # gaussian S-XOR
+        # i = 2
+        # self.train_X[i], self.train_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/100, angle_params=np.pi)
+        # self.test_X[i], self.test_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/100, angle_params=np.pi, train=False)
+        # self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/100, angle_params=np.pi, cc=True)
+        # self.Ctest_X[i], self.Ctest_y[i] = DG.generate_gaussian_parity(n=N, mean=mean, cov_scale=cov/100, angle_params=np.pi, cc=True, train=False)
+        
+        # # gaussian U-XOR
+        # i = 3
+        # self.train_X[i], self.train_y[i] = DG.generate_uniform_XOR(N=N, b=rng)
+        # self.test_X[i], self.test_y[i] = DG.generate_uniform_XOR(N=N, b=rng)
+        # self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_uniform_XOR(N=N, b=rng, cc=True)
+        # self.Ctest_X[i], self.Ctest_y[i] = DG.generate_uniform_XOR(N=N, b=rng, cc=True)
+
+        # # gaussian Spiral
+        # i = 4 #X, Y = generate.generate_spirals(n, 2, noise=1, rng=1, density=0.3) from behavioral
+        # self.train_X[i], self.train_y[i] = DG.generate_spirals(N=N, K=2, noise=1, density=0.3, rng=rng)
+        # self.test_X[i], self.test_y[i] = DG.generate_spirals(N=N, K=2, noise=1, density=0.3, rng=rng)
+        # self.Ctrain_X[i], self.Ctrain_y[i] = DG.generate_spirals(N=N, K=2, noise=1, density=0.3, rng=rng)
+        # self.Ctest_X[i], self.Ctest_y[i] = DG.generate_spirals(N=N, K=2, noise=1, density=0.3, rng=rng)
 
     def load(self, fname='SimulationData.pickle', save=False):
         '''
         loads saved simulation dataset or saves current attributes as a pickle
         '''
         CLFPATH = os.path.join(os.getcwd(), 'clf\\')
-        filename = CLFPATH + fname      
+        filename = CLFPATH + fname
 
         if os.path.exists(filename) and not save:
             with open(filename, 'rb') as f:
