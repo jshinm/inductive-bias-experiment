@@ -6,6 +6,8 @@ TODO:
 
 3/xx/21 <br>
 - [ ] translate codes in an object-oriented manner
+- [x] fix jagged spiral posterior
+    - resolved by increasing the number of spiral center
 - [ ] implement training class
 
 3/16/21 <br>

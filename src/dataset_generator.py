@@ -1,7 +1,12 @@
+'''
+Static class dataset generator for inductive bias experiment
+
+Author: Jong M. Shin
+'''
+
 import numpy as np
 from scipy.stats import norm
 from tqdm.notebook import tqdm  # compatible with jupyter
-
 
 class DatasetGenerator:
 
@@ -150,8 +155,8 @@ class DatasetGenerator:
         return np.vstack(X), np.array(Y).astype(int)
 
     @staticmethod
-    def generate_mask(l=-2, r=2, h=0.01):
-
+    def generate_mask(rng=3, h=0.01):
+        l, r = -rng, rng        
         x = np.arange(l, r, h)
         y = np.arange(l, r, h)
         x, y = np.meshgrid(x, y)
@@ -267,7 +272,7 @@ class DatasetGenerator:
         return np.vstack(X), np.array(Y).astype(int), Z, np.vstack(X0), np.vstack(X1), Z0, Z1
 
     @staticmethod
-    def pdf1(x, rotate=False, sig=0.25, rng=1, spirals=120):
+    def pdf1(x, sig=0.25, rng=1, spirals=270):
 
         x0, x1 = DatasetGenerator.spiral_center(spirals, K=2, rng=rng)
 
@@ -288,66 +293,76 @@ class DatasetGenerator:
         return p0/(p0+p1)
 
     @staticmethod
-    def true_spiral(l=-2, r=2, h=0.01, sig=0.01, rng=1, rotate=False, cc=False, spirals=120):
-        X = DatasetGenerator.generate_mask(l=l, r=r, h=h)
-
-        z = np.zeros(len(X), dtype=float)
+    def true_spiral(h=0.01, sig=0.00008, rng=4.3, cc=False, spirals=270, **kwarg):
+        X = DatasetGenerator.generate_mask(rng=rng, h=h)
+        z = np.zeros(len(X),dtype=float)
         z[:] = 0.5
 
-        for ii, x in enumerate(tqdm(X)):
-            if np.any([x <= -rng, x >= rng]) and cc == False:  # or x.any() > 1
-                # if np.any([x <= -1.0, x >= 1.0]) and cc == False:  # or x.any() > 1
-                # z[ii] = 0.5
-                pass
-            elif np.sqrt((x**2).sum(axis=0)) > rng and cc == True:
-                # z[ii] = 0.5
-                pass
+        for ii,x in enumerate(tqdm(X)):
+            if np.any([x <= -1.0, x >= 1.0]) and cc==False: #or x.any() > 1
+                return 
+                # pass
+            # elif np.sqrt((x**2).sum(axis=0)) > 1 and cc==True:
+            #     pass
             else:
-                # /np.sqrt(4)
-                nantest = 1 - \
-                    DatasetGenerator.pdf1(
-                        x, rotate=rotate, sig=sig, rng=rng, spirals=spirals)
+                nantest = DatasetGenerator.pdf1(x, sig=sig, rng=rng)#/np.sqrt(4)
                 if str(nantest) != 'nan':
-                    pass
+                    z[ii] = 1-nantest
                 else:
-                    print('There is {} at {} {}'.format(nantest, ii, x))
-                    break
-                z[ii] = nantest
+                    # print ('There is {} at {} {}'.format(nantest, ii, x))
+                    pass
+                    # break
             # z[ii] = 1-pdf(x, rotate=rotate, sig=sig)
+
+        # for ii, x in enumerate(tqdm(X)):
+        #     if np.any([x <= -rng, x >= rng]) and cc == False:  # or x.any() > 1
+        #         # if np.any([x <= -1.0, x >= 1.0]) and cc == False:  # or x.any() > 1
+        #         # z[ii] = 0.5
+        #         pass
+        #     elif np.sqrt((x**2).sum(axis=0)) > rng and cc == True:
+        #         # z[ii] = 0.5
+        #         pass
+        #     else:
+        #         nantest = 1 - \
+        #             DatasetGenerator.pdf1(
+        #                 x, rotate=rotate, sig=sig, rng=rng, spirals=spirals)
+        #         if str(nantest) != 'nan':
+        #             pass
+        #         else:
+        #             print('There is {} at {} {}'.format(nantest, ii, x))
+        #             break
+        #         z[ii] = nantest
+        #     # z[ii] = 1-pdf(x, rotate=rotate, sig=sig)
 
         z = (z - min(z)) / (max(z) - min(z))
 
         return X[:, 0], X[:, 1], z
 
     @staticmethod
-    def spiral_center(N, K=2, rng=2):
+    def spiral_center(N, K=2, rng=3):
 
         # N number of poinst per class
         # K number of classes
         X0, X1 = [], []
 
-        if K == 2:
-            turns = 2
+        turns = 2
 
         size = int(N/K)  # equal number of points per feature
 
-        if K == 2:
-            r = np.linspace(0, rng, size)
-            r = np.sort(r)
+        r = np.linspace(0, rng, size)
+        # r = np.sort(r)
+        t = np.linspace(0, np.pi * 4 * rng, size)
+        dx = r * np.cos(t)
+        dy = r * np.sin(t)
 
-            # + noise * np.random.normal(0, density, size)
-            t = np.linspace(0, np.pi * 4 * rng, size)
-            dx = r * np.cos(t)
-            dy = r * np.sin(t)
-
-            X0.append(np.vstack([dx, dy]).T)
-            X1.append(np.vstack([-dx, -dy]).T)
+        X0.append(np.vstack([dx, dy]).T)
+        X1.append(np.vstack([-dx, -dy]).T)
 
         return np.vstack(X0), np.vstack(X1)
 
     @staticmethod
-    def true_xor(l=-2, r=2, h=0.01, rotate=False, sig=0.25, cc=False):
-        X = DatasetGenerator.generate_mask(l=l, r=r, h=h)
+    def true_xor(rng=3, h=0.01, rotate=False, sig=0.25, cc=False, **kwarg):
+        X = DatasetGenerator.generate_mask(rng=rng, h=h)
 
         z = np.zeros(len(X), dtype=float)
 
@@ -357,7 +372,6 @@ class DatasetGenerator:
             elif np.sqrt((x**2).sum(axis=0)) > 1 and cc == True:
                 z[ii] = 0.5
             else:
-                # )/np.sqrt(4)
                 z[ii] = 1-DatasetGenerator.pdf(x, rotate=rotate, sig=sig)
             # z[ii] = 1-pdf(x, rotate=rotate, sig=sig)
 
@@ -366,9 +380,9 @@ class DatasetGenerator:
         return X[:, 0], X[:, 1], z
 
     @staticmethod
-    def true_Uxor(l=-2, r=2, h=0.01, cc=False):
+    def true_Uxor(rng=3, h=0.01, cc=False, **kwarg):
 
-        X = DatasetGenerator.generate_mask(l=l, r=r, h=h)
+        X = DatasetGenerator.generate_mask(rng=rng, h=h)
 
         l = -1
         r = 1
