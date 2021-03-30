@@ -8,10 +8,20 @@ import os
 import pickle
 import numpy as np
 from datetime import datetime
+from .dataset_generator import DatasetGenerator as DG
 
 class datasetLoader:
 
-    def generate(self, N=100, cov=1, rng=1):
+    def generate_dataset(self, N=100, cov=1, rng=1):
+        '''
+        Generates simulation datasets
+
+        N: number of samples
+        cov: covariance
+        rng: range
+
+        index = ['Gaussian XOR', 'Uniform XOR', 'Spiral', 'Gaussian R-XOR', 'Gaussian S-XOR']
+        '''
 
         mean = np.array([-rng,-rng])
 
@@ -19,18 +29,18 @@ class datasetLoader:
 
             if i == 0: # gaussian XOR
                 args = {'n': N, 'mean': mean, 'cov_scale': cov/10, 'angle_params': np.pi}
-            elif i == 1: # gaussian R-XOR
+            elif i == 3: # gaussian R-XOR
                 args = {'n': N, 'mean': mean, 'cov_scale': cov/10, 'angle_params': np.pi/4}
-            elif i == 2: # gaussian S-XOR
+            elif i == 4: # gaussian S-XOR
                 args = {'n': N, 'mean': mean, 'cov_scale': cov/100, 'angle_params': np.pi}
-            elif i == 3: # gaussian U-XOR
+            elif i == 1: # gaussian U-XOR
                 args = {'N': N, 'b': rng}
-            elif i == 4: # gaussian Spiral
+            elif i == 2: # gaussian Spiral
                 args = {'N': N, 'K': 2, 'noise': 1, 'density': 0.3, 'rng': rng}
 
-            if i == 3:
+            if i == 1:
                 func = DG.generate_uniform_XOR
-            elif i == 4:
+            elif i == 2:
                 func = DG.generate_spirals
             else:
                 func = DG.generate_gaussian_parity
@@ -40,7 +50,7 @@ class datasetLoader:
             self.Ctrain_X[i], self.Ctrain_y[i] = func(**args, cc=True)
             self.Ctest_X[i], self.Ctest_y[i] = func(**args, cc=True)
                 
-    def load(self, fname='SimulationData.pickle', save=False):
+    def load_dataset(self, fname='SimulationData.pickle', save=False):
         '''
         loads saved simulation dataset or saves current attributes as a pickle
         '''
@@ -82,7 +92,7 @@ class datasetLoader:
             print('completed after ' + str(deltaT.seconds) + ' seconds')
             print('saved as [', filename, ']')
 
-    def read(self, dset):
+    def read_dataset(self, dset):
         '''
         read train and test dataset
         '''

@@ -300,12 +300,11 @@ class DatasetGenerator:
 
         for ii,x in enumerate(tqdm(X)):
             if np.any([x <= -1.0, x >= 1.0]) and cc==False: #or x.any() > 1
-                return 
-                # pass
-            # elif np.sqrt((x**2).sum(axis=0)) > 1 and cc==True:
-            #     pass
+                pass
+            elif np.sqrt((x**2).sum(axis=0)) > 1 and cc==True:
+                pass
             else:
-                nantest = DatasetGenerator.pdf1(x, sig=sig, rng=rng)#/np.sqrt(4)
+                nantest = DatasetGenerator.pdf1(x, sig=sig, rng=3)#/np.sqrt(4)
                 if str(nantest) != 'nan':
                     z[ii] = 1-nantest
                 else:
@@ -339,7 +338,7 @@ class DatasetGenerator:
         return X[:, 0], X[:, 1], z
 
     @staticmethod
-    def spiral_center(N, K=2, rng=3):
+    def spiral_center(N, K=2, rng=3, **kwargs):
 
         # N number of poinst per class
         # K number of classes
