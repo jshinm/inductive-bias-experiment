@@ -9,8 +9,10 @@ TODO:
 - [x] fix jagged spiral posterior
     - resolved by increasing the number of spiral center
 - [ ] add spiral overlapped image to the posterior notebook
-- [ ] implement training class
+    - try behavioral posterior
+- [x] implement training class
     - wrote a subclass to interact with the base class
+- [ ] write a notebook that generates publication figures
 
 3/16/21 <br>
 - [x] extract the estimated posterior along the line at 135 degree

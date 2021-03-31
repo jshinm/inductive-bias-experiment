@@ -12,14 +12,17 @@ from .dataset_generator import DatasetGenerator as DG
 from .dataset_loader import datasetLoader as DL
 from .train_model import trainModel as TM
 
+
 class IB(DL, TM):
     def __init__(self):
         '''
         ['Gaussian XOR', 'Uniform XOR', 'Spiral', 'Gaussian R-XOR', 'Gaussian S-XOR']
         '''
         self.date = datetime.now()
-        self.mtype = ['SVM', 'MLP', 'RF', 'QDA'] # list of ML models (SVC removed on 12/8/2020), (KNN/XGBoost removed on 12/9/2020)
-        self.dtype = ['Gaussian XOR', 'Uniform XOR', 'Spiral', 'Gaussian R-XOR', 'Gaussian S-XOR'] # list of datasets
+        # list of ML models (SVC removed on 12/8/2020), (KNN/XGBoost removed on 12/9/2020)
+        self.mtype = ['SVM', 'MLP', 'RF', 'QDA']
+        self.dtype = ['Gaussian XOR', 'Uniform XOR', 'Spiral',
+                      'Gaussian R-XOR', 'Gaussian S-XOR']  # list of datasets
 
         m = len(self.mtype)
         d = len(self.dtype)
@@ -27,7 +30,10 @@ class IB(DL, TM):
         self.spiral = DG.spiral_center(N=270, rng=3)
 
         self.truepst = [[[] for i in range(d)] for j in range(2)]
+        self.estpst = [[[] for i in range(d)] for j in range(2)]
         self.clf = [[[] for i in range(m)] for j in range(2)]
+
+        self.mask = DG.generate_mask()
 
         self.train_X = [[] for i in range(d)]
         self.train_y = [[] for i in range(d)]
@@ -49,8 +55,8 @@ class IB(DL, TM):
         density: spiral center density
         rng: range
         '''
-
-        self.spiral = DG.generate_spirals(**kwargs)#.spiral_center(**kwargs)
+        self.spiral = DG.spiral_center(**kwargs)
+        # self.spiral = DG.generate_spirals(**kwargs)  # .spiral_center(**kwargs)
 
     def get_posterior(self, **kwargs):
         '''
@@ -66,7 +72,7 @@ class IB(DL, TM):
 
             for j in range(5):
 
-                arg = kwargs.copy() #reinitialize args
+                arg = kwargs.copy()  # reinitialize args
 
                 if i == 0:
                     arg['cc'] = False
@@ -75,7 +81,7 @@ class IB(DL, TM):
 
                 if j == 0:
                     self.truepst[i][j] = DG.true_xor(**arg)
-                elif j == 1:                    
+                elif j == 1:
                     self.truepst[i][j] = DG.true_Uxor(**arg)
                 elif j == 2:
                     arg['rng'] = 4.3
@@ -88,47 +94,76 @@ class IB(DL, TM):
                     arg['sig'] = 0.1
                     self.truepst[i][j] = DG.true_xor(**arg)
 
-    def load_posterior(self, fname='PosteriorData.pickle', save=False):
+    def load(self, fname, target, save=False):
         '''
-        loads saved posterior distribution for all datasets or saves current attributes as a pickle
+        loads previously saved attributes from a pickle or saves current attributes as a pickle
         '''
         CLFPATH = os.path.join(os.getcwd(), 'clf\\')
         filename = CLFPATH + fname
 
         if os.path.exists(filename) and not save:
             with open(filename, 'rb') as f:
-                self.truepst = pickle.load(f, encoding='bytes')
+                target = pickle.load(f, encoding='bytes')                
 
             print('[', filename, '] loaded')
 
-        else: 
-            print('saving current posterior..')
+        else:
+            print('saving current attributes..')
             sTime = datetime.now()
-            
+
             if not os.path.isdir(CLFPATH):
                 os.makedirs(CLFPATH)
 
             with open(filename, 'wb') as f:
-                pickle.dump(self.truepst, f)
+                pickle.dump(target, f)
 
             deltaT = datetime.now() - sTime
             print('completed after ' + str(deltaT.seconds) + ' seconds')
-            print('saved as [', filename, ']')      
+            print('saved as [', filename, ']')
+
+        return target
+
+    def load_posterior(self, fname='PosteriorData.pickle', save=False):
+        '''
+        loads saved posterior distribution for all datasets or saves current attributes as a pickle
+        '''
+        self.truepst = self.load(fname='PosteriorData.pickle', target=self.truepst, save=save)
 
     def get_clf(self):
         '''
-        '''        
+        train ML models with the simulation datasets
+        '''
         for j in range(2):
             for i in range(len(self.mtype)):
                 if j == 0:
-                    args = dict(dset=i, enable=[0,0,1,0,1,1], cc=False)
+                    args = dict(dset=i, enable=[0, 0, 1, 0, 1, 1], cc=False)
                 else:
-                    args = dict(dset=i, enable=[0,0,1,0,1,1], cc=True)
+                    args = dict(dset=i, enable=[0, 0, 1, 0, 1, 1], cc=True)
 
-                self.clf[j][i] = TM.train_model(**args)
+                self.clf[j][i] = self.train(**args)
 
+    def load_clf(self, fname='TrainedCLF.pickle', save=False):
+        '''
+        loads saved classifiers trained on all datasets or saves current classifier attributes as a pickle
+        '''        
+        self.clf = self.load(fname='TrainedCLF.pickle', target=self.clf, save=save)
 
+    def get_proba(self):
+        '''
+        get estimated posterior probability
+        '''
+        for i in range(len(self.clf)): #either square or circular boundary
+            for j, cl in enumerate(self.clf[i]): #datasets
+                for md in cl:
+                    temp = None  # for some reason, this is required for RXOR
+                    temp = md.predict_proba(self.mask)
+                    self.estpst[i][j].append(temp)
 
+    def load_est(self, save=False):
+        '''
+        loads posterior prediction from the trained sklearn classifiers using predict_proba() or saves current posterior attributes as a pickle
+        '''
+        self.estpst = self.load(fname='EstimatedData.pickle', target=self.estpst, save=save)
 
     def get_testpdfSpiral(self, N, K=2, noise=1, acorn=None, density=0.5, rng=1):
         '''
@@ -144,4 +179,3 @@ class IB(DL, TM):
 
     def train_models():
         pass
-

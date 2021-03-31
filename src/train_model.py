@@ -4,13 +4,20 @@ Subclass ML training module for inductive bias experiment
 Author: Jong M. Shin
 '''
 
+from sklearn.model_selection import GridSearchCV
+
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import svm
+import xgboost as xgb
+from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+import numpy as np
+
 
 class trainModel:
 
-    # def __init__(self, dataset):
-    #     self.dataset = dataset
-
-    def train_model(self, dset, enable=[0, 0, 1, 0, 1, 1], cc=False):
+    def train(self, dset, enable=[0, 0, 1, 0, 1, 1], cc=False):
 
         mods = ['KNN', 'SVC', 'SVM', 'XGBoost', 'MLP', 'RF']  # local mods list
 
@@ -25,7 +32,7 @@ class trainModel:
             print("Best accuracy value: ", model.best_score_)
 
             clf.set_params(**model.best_params_)
-            clf.fit(train_X, train_y)
+            clf.fit(train_X, train_y) #actually fitting the model
             print("prediction score: ", model.score(test_X, test_y))
             print(clf)
 
@@ -35,7 +42,6 @@ class trainModel:
 
         post = []
 
-        # train_X, train_y, test_X, test_y = select_dataset(dset, cc=cc)
         if cc:
             train_X, train_y, test_X, test_y = self.Ctrain_X[
                 dset], self.Ctrain_y[dset], self.Ctest_X[dset], self.Ctest_y[dset]
