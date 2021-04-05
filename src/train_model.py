@@ -4,15 +4,16 @@ Subclass ML training module for inductive bias experiment
 Author: Jong M. Shin
 '''
 
-from sklearn.model_selection import GridSearchCV
+import numpy as np
 
+from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
-import xgboost as xgb
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-import numpy as np
+
+import xgboost as xgb
 
 
 class trainModel:
@@ -32,7 +33,7 @@ class trainModel:
             print("Best accuracy value: ", model.best_score_)
 
             clf.set_params(**model.best_params_)
-            clf.fit(train_X, train_y) #actually fitting the model
+            clf.fit(train_X, train_y)  # actually fitting the model
             print("prediction score: ", model.score(test_X, test_y))
             print(clf)
 
@@ -120,11 +121,6 @@ class trainModel:
         #### RF #####
 
         if enable[5] == 1:
-            # tuned_param=[{'max_depth':range(1,11),'n_estimators':[64,128,256]}, #range(1,11)
-            #             {'max_depth':range(1,11),'n_estimators':[64,128,256]}, #range(1,11)
-            #             {'max_depth':range(10,20,2),'n_estimators':[64,128,256]},
-            #             {'max_depth':range(1,11),'n_estimators':[64,128,256]},
-            #             {'max_depth':range(1,11),'n_estimators':[64,128,256]}] #range(7,11)
             tuned_param = [{'max_depth': [10], 'n_estimators':[128]},
                            {'max_depth': [10], 'n_estimators':[128]},
                            {'max_depth': [10], 'n_estimators':[128]},

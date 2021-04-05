@@ -11,13 +11,12 @@ from datetime import datetime
 from .dataset_generator import DatasetGenerator as DG
 from .dataset_loader import datasetLoader as DL
 from .train_model import trainModel as TM
+from .model_analysis import modelAnalysis as MA
 
 
-class IB(DL, TM):
+class IB(DL, TM, MA):
     def __init__(self):
-        '''
-        ['Gaussian XOR', 'Uniform XOR', 'Spiral', 'Gaussian R-XOR', 'Gaussian S-XOR']
-        '''
+
         self.date = datetime.now()
         # list of ML models (SVC removed on 12/8/2020), (KNN/XGBoost removed on 12/9/2020)
         self.mtype = ['SVM', 'MLP', 'RF', 'QDA']
@@ -31,9 +30,11 @@ class IB(DL, TM):
 
         self.truepst = [[[] for i in range(d)] for j in range(2)]
         self.estpst = [[[] for i in range(d)] for j in range(2)]
-        self.clf = [[[] for i in range(m)] for j in range(2)]
+        self.clf = [[[] for i in range(d)] for j in range(2)]
+        self.hdist = None
+        self.human = None
 
-        self.mask = DG.generate_mask()
+        self.mask = DG.generate_mask(rng=4.3)
 
         self.train_X = [[] for i in range(d)]
         self.train_y = [[] for i in range(d)]
@@ -44,6 +45,8 @@ class IB(DL, TM):
         self.Ctrain_y = [[] for i in range(d)]
         self.Ctest_X = [[] for i in range(d)]
         self.Ctest_y = [[] for i in range(d)]
+
+        self._loadall()
 
     def get_spiralCenter(self, **kwargs):
         '''
@@ -66,11 +69,18 @@ class IB(DL, TM):
         sig: covariance
         rng: range
         spirals: number of seed spirals (each spiral generates gaussian posterior)
+
+        output
+        ------
+        x: a vector of x-coordinates of the grid 
+        y: a vector of y-coordinates of the grid
+        posterior: a vector of posterior probability
         '''
+        self.truepst = [[[] for i in range(len(self.dtype))] for j in range(2)]
 
         for i in range(2):
 
-            for j in range(5):
+            for j in range(self.dtype):
 
                 arg = kwargs.copy()  # reinitialize args
 
@@ -84,7 +94,6 @@ class IB(DL, TM):
                 elif j == 1:
                     self.truepst[i][j] = DG.true_Uxor(**arg)
                 elif j == 2:
-                    arg['rng'] = 4.3
                     arg['sig'] = 0.00008
                     self.truepst[i][j] = DG.true_spiral(**arg)
                 elif j == 3:
@@ -94,47 +103,15 @@ class IB(DL, TM):
                     arg['sig'] = 0.1
                     self.truepst[i][j] = DG.true_xor(**arg)
 
-    def load(self, fname, target, save=False):
-        '''
-        loads previously saved attributes from a pickle or saves current attributes as a pickle
-        '''
-        CLFPATH = os.path.join(os.getcwd(), 'clf\\')
-        filename = CLFPATH + fname
-
-        if os.path.exists(filename) and not save:
-            with open(filename, 'rb') as f:
-                target = pickle.load(f, encoding='bytes')                
-
-            print('[', filename, '] loaded')
-
-        else:
-            print('saving current attributes..')
-            sTime = datetime.now()
-
-            if not os.path.isdir(CLFPATH):
-                os.makedirs(CLFPATH)
-
-            with open(filename, 'wb') as f:
-                pickle.dump(target, f)
-
-            deltaT = datetime.now() - sTime
-            print('completed after ' + str(deltaT.seconds) + ' seconds')
-            print('saved as [', filename, ']')
-
-        return target
-
-    def load_posterior(self, fname='PosteriorData.pickle', save=False):
-        '''
-        loads saved posterior distribution for all datasets or saves current attributes as a pickle
-        '''
-        self.truepst = self.load(fname='PosteriorData.pickle', target=self.truepst, save=save)
-
     def get_clf(self):
         '''
         train ML models with the simulation datasets
         '''
+        self.clf = [[[] for i in range(len(self.dtype))]
+                    for j in range(2)]  # reinitialize
+
         for j in range(2):
-            for i in range(len(self.mtype)):
+            for i in range(len(self.dtype)):
                 if j == 0:
                     args = dict(dset=i, enable=[0, 0, 1, 0, 1, 1], cc=False)
                 else:
@@ -142,28 +119,62 @@ class IB(DL, TM):
 
                 self.clf[j][i] = self.train(**args)
 
-    def load_clf(self, fname='TrainedCLF.pickle', save=False):
-        '''
-        loads saved classifiers trained on all datasets or saves current classifier attributes as a pickle
-        '''        
-        self.clf = self.load(fname='TrainedCLF.pickle', target=self.clf, save=save)
-
     def get_proba(self):
         '''
         get estimated posterior probability
         '''
-        for i in range(len(self.clf)): #either square or circular boundary
-            for j, cl in enumerate(self.clf[i]): #datasets
+        self.estpst = [[[] for i in range(len(self.dtype))]
+                       for j in range(2)]  # reinitialize
+
+        for i in range(len(self.clf)):  # either square or circular boundary
+            for j, cl in enumerate(self.clf[i]):  # datasets
                 for md in cl:
                     temp = None  # for some reason, this is required for RXOR
                     temp = md.predict_proba(self.mask)
-                    self.estpst[i][j].append(temp)
+                    self.estpst[i][j].append(temp[:, 0])
 
-    def load_est(self, save=False):
+    def get_hellinger(self):
         '''
-        loads posterior prediction from the trained sklearn classifiers using predict_proba() or saves current posterior attributes as a pickle
+        get hellinger distance between estimated and true posterior distributions
+
+        output
+        ------
+        hdist: computed hellinger distance in i x j x k array 
+        where i is a type of unit boundary (square: 0, circle: 1), 
+        j is a type of datasets, and k is a type of ML models
         '''
-        self.estpst = self.load(fname='EstimatedData.pickle', target=self.estpst, save=save)
+
+        self.hdist = self.compute_hellinger(
+            estP=self.estpst, trueP=self.truepst)
+
+    def get_radialDist(self, dat):
+        '''
+        get smoothed radial distance
+
+        dat: a N x 3 matrix where there are N number of samples
+        and three columns of x, y, variable of interest
+        origin: origin of the distance
+        step: step in which the search radius is increasing
+        end: outer boundary of the search
+        srng: smoothing range (aka width of the search ring)
+
+        output
+        ------
+        returns a 2-D list of radial distance and vectors of variable of interest
+        '''
+        return self.smooth_radial_distance(dat)
+
+    def _loadall(self):
+        '''
+        convenient method that loads datasets, trained classifiers, true posteriors, 
+        estimated posteriors, hellinger distance between true and estimated posterior
+        '''
+        self.load_dataset()
+        self.load_posterior()
+        self.load_clf()
+        self.load_est()
+        self.load_hellinger()
+        self.load_MTurk()
 
     def get_testpdfSpiral(self, N, K=2, noise=1, acorn=None, density=0.5, rng=1):
         '''
@@ -176,6 +187,3 @@ class IB(DL, TM):
         get colors for two classes
         '''
         return [colors[i] for i in inds]
-
-    def train_models():
-        pass

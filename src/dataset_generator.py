@@ -8,6 +8,7 @@ import numpy as np
 from scipy.stats import norm
 from tqdm.notebook import tqdm  # compatible with jupyter
 
+
 class DatasetGenerator:
 
     @staticmethod
@@ -156,7 +157,7 @@ class DatasetGenerator:
 
     @staticmethod
     def generate_mask(rng=3, h=0.01):
-        l, r = -rng, rng        
+        l, r = -rng, rng
         x = np.arange(l, r, h)
         y = np.arange(l, r, h)
         x, y = np.meshgrid(x, y)
@@ -231,22 +232,12 @@ class DatasetGenerator:
                 noise * np.random.normal(0, density, size)
             dx = r * np.cos(t)
             dy = r * np.sin(t)
-
-            # print(np.vstack([dx, dy]).T)
-
-            # print(norm(0,1).pdf(np.vstack([dx, dy]).T)[:,0])
+            
             Z0 += [1 for i in norm(0, 1).pdf(np.vstack([dx, dy]).T)[:, 0]]
             Z1 += [1 for i in norm(0, 1).pdf(np.vstack([-dx, -dy]).T)[:, 1]]
 
             Z += [1 for i in norm(0, 1).pdf(np.vstack([dx, dy]).T)[:, 0]]
             Z += [0 for i in norm(0, 1).pdf(np.vstack([-dx, -dy]).T)[:, 1]]
-            # Z += np.subtract(Z0,Z1).tolist()
-            # Z += np.subtract(Z1,Z0).tolist()
-            # Z += np.split(np.array(norm(0,1).pdf(np.vstack([dx, dy]).T)[:,0]), 1)
-            # Z += np.split(np.array(norm(0,1).pdf(np.vstack([-dx, -dy]).T)[:,0]), 1)
-
-            # Z += [0.1] * size
-            # Z += [0.1] * size
 
             X.append(np.vstack([dx, dy]).T)
             X.append(np.vstack([-dx, -dy]).T)
@@ -295,16 +286,17 @@ class DatasetGenerator:
     @staticmethod
     def true_spiral(h=0.01, sig=0.00008, rng=4.3, cc=False, spirals=270, **kwarg):
         X = DatasetGenerator.generate_mask(rng=rng, h=h)
-        z = np.zeros(len(X),dtype=float)
+        z = np.zeros(len(X), dtype=float)
         z[:] = 0.5
 
-        for ii,x in enumerate(tqdm(X)):
-            if np.any([x <= -1.0, x >= 1.0]) and cc==False: #or x.any() > 1
+        for ii, x in enumerate(tqdm(X)):
+            if np.any([x <= -1.0, x >= 1.0]) and cc == False:  # or x.any() > 1
                 pass
-            elif np.sqrt((x**2).sum(axis=0)) > 1 and cc==True:
+            elif np.sqrt((x**2).sum(axis=0)) > 1 and cc == True:
                 pass
             else:
-                nantest = DatasetGenerator.pdf1(x, sig=sig, rng=3)#/np.sqrt(4)
+                nantest = DatasetGenerator.pdf1(
+                    x, sig=sig, rng=3)  # /np.sqrt(4)
                 if str(nantest) != 'nan':
                     z[ii] = 1-nantest
                 else:

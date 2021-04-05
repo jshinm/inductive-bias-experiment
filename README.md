@@ -13,6 +13,7 @@ TODO:
 - [x] implement training class
     - wrote a subclass to interact with the base class
 - [ ] write a notebook that generates publication figures
+    - added human plots
 
 3/16/21 <br>
 - [x] extract the estimated posterior along the line at 135 degree
