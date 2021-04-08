@@ -1,8 +1,43 @@
 # Inductive Bias Experiment
 inductive bias experiment for deepnet paper
 
+<!-- 
 TODO:
-- [ ] implement spiral posterior
+- N/A 
+-->
+
+3/30/21 <br>
+- [x] Recode the whole project in an object-oriented manner 
+    - implement the dataset loader
+    - implement the dataset trainer
+    - implement the dataset generator
+    - implement the tool for analysis
+    - implement the model trainer
+- [x] Retrain ML models with lesser sample points of simulation datasets (750->100) to match that of human experiment
+- [x] fix jagged spiral posterior
+    - resolved by increasing the number of spiral center
+- [x] Explore mean and variance of posterior and hellinger distance with gaussian smoothing
+- [x] implement training class
+    - wrote a subclass to interact with the base class
+- [x] Simulate human behavioral experiment setting on ML experiment
+
+3/16/21 <br>
+- [x] extract the estimated posterior along the line at 135 degree
+- [x] draw line plot of the mean estimated posterior along the line
+- [x] plot pre-activation & post-activation of the MLP model (i.e. activation of the last output layer)
+- [x] draw line plot of the mean estimated posterior along the line (between pre-post activation of MLP)
+
+12/30/20 <br>
+- [x] implement spiral posterior
+
+<!-- 12/20/20 <br>
+
+1. plot on the top row: class 1 likelihood, sample data, class 1 posterior
+2. plot on bottom row: 3 estimated posteriors
+3. make all the plots circular with radius 4
+4. top row: show class 1 posterior curves
+5. bottom row: show class 1 hellinger distance curves
+6. for the posterior estimates, label with alg name & their mean hellinger distance -->
 
 12/14/20 <br>
 - [x] remove KNN and XGBoost from the figure
