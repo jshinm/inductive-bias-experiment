@@ -5,6 +5,8 @@ Author: Jong M. Shin
 '''
 
 import numpy as np
+from itertools import product
+from scipy.stats import norm
 from tqdm.notebook import tqdm
 from .dataset_generator import DatasetGenerator as DG
 
@@ -68,20 +70,22 @@ class modelAnalysis(DG):
         ans, err = quad(integrand, -np.inf, np.inf)
         return f, g, ans / 2
 
-    def compute_hellinger(self, estP, trueP):
+    def compute_hellinger(self, estP, trueP, fast=False):
         '''
         compute hellinger distance of p and q distribution
         '''
         hdist = []
-
-        for k in tqdm(range(2)):
+        
+        for k in tqdm(range(2), desc='hellinger', leave=False):
             hdist.append([])
-            for i in tqdm(range(5), leave=False):
+            for i in tqdm(range(5), desc='helliner-inner', leave=False):
                 hdist[k].append([])
                 for j in range(4):
                     hdist[k][i].append([])
-                    hdist[k][i][j] = self._hellinger_explicit(
-                        trueP[k][i][2], estP[k][i][j][:, 0])
+                    if k == 0: continue
+                    if i == 2 or i == 4:
+                        hdist[k][i][j] = self._hellinger_explicit(
+                            trueP[k][i][2], estP[k][i][j])
 
         return hdist
 
@@ -113,7 +117,7 @@ class modelAnalysis(DG):
         end: outer boundary of the search
         srng: smoothing range (aka width of the search ring)
         '''
-        h_rad = np.arange(0, end, step)
+        h_rad = np.arange(0, end+step, step)
         alpha = step * srng  # line vicinity (0.5), aka smoothing range
         new_rad = []
         new_dat = []
@@ -130,7 +134,7 @@ class modelAnalysis(DG):
             tempidx = idx[temp_distC]
             tempidx = idx[np.all((distC <= r+alpha, distC >= r-alpha), axis=0)]
 
-            distC[temp_distC] = 10.  # prevent double counting
+            # distC[temp_distC] = 10.  # prevent double counting
 
             if tempidx.size != 0:
                 new_rad.append(r)
@@ -148,92 +152,74 @@ class modelAnalysis(DG):
         
         return [new_rad, new_dat]
 
-    # def compute_hellinger(self, estP, trueP):
+    def _gauss2d(self, x, y, x0, y0, A, sig_x=1, sig_y=1):
+        '''
+        2D Gaussian function
+        '''
+        frac_x = (x-x0)**2 / (2*sig_x**2)
+        frac_y = (y-y0)**2 / (2*sig_y**2)
+        out = A*np.exp(-(frac_x+frac_y))
+        return out
 
-    #     '''
-    #     compute hellinger distance of p and q distribution
-    #     '''
+    @staticmethod
+    def sample(dat, target, N):
+        '''
+        Randomly samples from the target and append on dat, thus the dat and the target must be of the same dimension
+        '''
+        temp_idx = np.arange(0, target.shape[0],1)
+        idx_selected = np.random.choice(temp_idx, N)
 
-    #     # if path.exists(filename) and save:
-    #     #     with open(filename, 'rb') as f:
-    #     #         WHOLE_hellinger, OUT_hellinger, IN_hellinger, uX_inside, uX_outside = pickle.load(f, encoding='bytes')
-    #     #     print('[', filename, '] loaded')
+        return np.vstack([dat, target[idx_selected]])
 
-    #     # else:
-    #     uX_outside = []
-    #     uX_inside  = []
-    #     OUT_hellinger = []
-    #     IN_hellinger  = []
-    #     WHOLE_hellinger = []
-    #     uX = self.mask
+    def smooth_gaussian_distance(self, dat, radius=1, step=0.5, method='mean'):
+        '''
+        Applies gaussian smoothing over a grid. Takes N x 3 matrix where first two columns are X and Y coordinates of the grid and the last column is variable of interest.
 
-    #     # split inside and outside
-    #     for i in range(len(uX)):
+        dat: N x 3 matrix
+        radius: radius of circular ROI where gaussian smoothing will be applied (default: 1)
+        step: sparsity of circular ROI center (default: 0.5)
+        method: method of smoothing, options='mean', 'var' (default: mean)
 
-    #         if np.sqrt((uX[i]**2).sum(axis=0)) < 1:  #np.all([uX[i] > -1, uX[i] < 1]):
-    #             uX_inside.append(uX[i].tolist())
-    #         else:
-    #             uX_outside.append(uX[i].tolist())
+        output
+        ------
+        List of (X,Y) coordinates of circular ROI center and smoothed gaussian variable of interest
+        '''
+        grid = dat[:,:2]
+        xL, xR = min(dat[:,0]), max(dat[:,0])
+        yT, yB = min(dat[:,1]), max(dat[:,1])
 
-    #     uX_outside = np.array(uX_outside)
-    #     uX_inside  = np.array(uX_inside)
+        X = np.arange(xL, xR, step).round(1)
+        Y = np.arange(yT, yB, step).round(1)
 
-    #     for dat in tqdm(range(len(estP))): #number of datasets (=ib.dtype)
+        XY = list(product(X,Y))
 
-    #         # clear_output(wait=True)
+        out = []
 
-    #         OUT_hellinger.append([])
-    #         IN_hellinger.append([])
-    #         WHOLE_hellinger.append([])
+        for i in tqdm(range(len(XY)),leave=False):
+            x = dat[self._euclidean(dat, XY[i]) < radius][:,0]
+            y = dat[self._euclidean(dat, XY[i]) < radius][:,1]
+            a = dat[self._euclidean(dat, XY[i]) < radius][:,2]
+            if method == 'mean':
+                out.append(self._gauss2d(x=x, y=y, x0=XY[i][0], y0=XY[i][1], A=a).mean())
+            elif method == 'var':
+                out.append(self._gauss2d(x=x, y=y, x0=XY[i][0], y0=XY[i][1], A=a).var())
 
-    #         # calculate RADIAL hellinger distance
-    #         for i in range(len(estP[0])): #number of ML models (=ib.mtype)
+        return [XY, out]
 
-    #             inner_trueP = np.zeros(len(uX_inside))
-    #             inner_testP = np.zeros(len(uX_inside))
-    #             outer_trueP = np.zeros(len(uX_outside))
-    #             outer_testP = np.zeros(len(uX_outside))
-    #             innermask = []
-    #             outermask = []
-    #             temp_OUT_hellinger = np.zeros(len(uX_outside))
-    #             temp_IN_hellinger  = np.zeros(len(uX_inside))
-    #             c = 0
-    #             cc = 0
-    #             WHOLE_hellinger[dat].append([])
+    @staticmethod
+    def pointwise_gridAverage(dat):
+        '''
+        Averages the values associated with the grid point-wise.
 
-    #             for ii, prob in enumerate(uX):
-    #                 if np.sqrt((prob**2).sum(axis=0)) < 1: #np.all([prob > -1, prob < 1]):
-    #                     inner_trueP[c] = trueP[dat][ii]
-    #                     inner_testP[c] = estP[dat][i][ii]
-    #                     nantest = self.hellinger(inner_trueP[c], inner_testP[c])
-    #                     if str(nantest) != 'nan':
-    #                         temp_IN_hellinger[c] = nantest
-    #                     else:
-    #                         print('There is NaN in {}th data at location {}'.format(i, ii))
-    #                         break
-    #                     WHOLE_hellinger[dat][i].append(temp_IN_hellinger[c])
-    #                     innermask.append(prob)
-    #                     c += 1
-    #                 else:
-    #                     print(inner_trueP[c] , trueP[dat][ii])
-    #                     outer_trueP[cc] = trueP[dat][ii]
-    #                     outer_testP[cc] = estP[dat][i][ii]
-    #                     temp_OUT_hellinger[cc] = self.hellinger(outer_trueP[cc], outer_testP[cc])
-    #                     WHOLE_hellinger[dat][i].append(temp_OUT_hellinger[cc])
-    #                     outermask.append(prob)
-    #                     cc += 1
+        Takes N x 3 array where first two columns are assumed to be the coordinates. 
+        They are joined into one column and any duplicates are removed based on this column.
 
-    #             OUT_hellinger[dat].append(temp_OUT_hellinger)
-    #             IN_hellinger[dat].append(temp_IN_hellinger)
-
-    #     WHOLE_hellinger = np.array(WHOLE_hellinger)
-
-    #     # with open(filename, 'wb') as f:
-    #     #     pickle.dump([WHOLE_hellinger, OUT_hellinger, IN_hellinger, uX_inside, uX_outside], f)
-
-    #     print ('\n' + '#'*40
-    #     + '\nTotal number of points on grid: ' + str(len(OUT_hellinger[0][0])+len(IN_hellinger[0][0]))
-    #     + '\nOuter number of points on grid: ' + str(len(OUT_hellinger[0][0]))
-    #     + '\nInner number of points on grid: ' + str(len(IN_hellinger[0][0])))
-
-    #     return [WHOLE_hellinger, OUT_hellinger, IN_hellinger, uX_inside, uX_outside]
+        output
+        ------
+        N x 3 array where the structure of the input is maintained and duplicates are removed
+        '''
+        dat = pd.DataFrame(dat, columns=['x', 'y', 'c']).astype(float)
+        dat['xy'] = dat['x'].astype(str).str.cat(dat['y'].astype(str),sep=',')
+        dat = dat.groupby('xy').mean().reset_index(drop=True)
+        
+        return dat

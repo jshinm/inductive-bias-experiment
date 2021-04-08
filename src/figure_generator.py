@@ -353,7 +353,7 @@ class FigGenerator:
         col = 4
         interp_method = 'cubic'  # interpolation methods
 
-        for ii, j in enumerate([2, 4]):
+        for ii, j in range(2):#enumerate([2, 4]):
 
             cnt = 0
 

@@ -7,6 +7,7 @@ Author: Jong M. Shin
 import os
 import pickle
 import numpy as np
+from tqdm.notebook import tqdm
 from datetime import datetime
 from .dataset_generator import DatasetGenerator as DG
 from .dataset_loader import datasetLoader as DL
@@ -33,8 +34,12 @@ class IB(DL, TM, MA):
         self.clf = [[[] for i in range(d)] for j in range(2)]
         self.hdist = None
         self.human = None
+        seed = np.array([[],[],[]]).T
+        self.estpst_sample = [[seed for i in range(m)] for i in range(2)] #only for spiral and S-XOR
+        self.hdist_sample = [[seed for i in range(m)] for i in range(2)] #only for spiral and S-XOR
 
         self.mask = DG.generate_mask(rng=4.3)
+        # self.mask = DG.generate_mask(rng=3, h=0.1)
 
         self.train_X = [[] for i in range(d)]
         self.train_y = [[] for i in range(d)]
@@ -61,6 +66,47 @@ class IB(DL, TM, MA):
         self.spiral = DG.spiral_center(**kwargs)
         # self.spiral = DG.generate_spirals(**kwargs)  # .spiral_center(**kwargs)
 
+    def get_dataset(self, N=100, cov=1, rng=1):
+        '''
+        Generates simulation datasets
+
+        N: number of samples
+        cov: covariance
+        rng: range
+
+        index = ['Gaussian XOR', 'Uniform XOR', 'Spiral', 'Gaussian R-XOR', 'Gaussian S-XOR']
+        '''
+
+        mean = np.array([-rng, -rng])
+
+        for i in range(5):
+
+            if i == 0:  # gaussian XOR
+                args = {'n': N, 'mean': mean,
+                        'cov_scale': cov/10, 'angle_params': np.pi}
+            elif i == 3:  # gaussian R-XOR
+                args = {'n': N, 'mean': mean, 'cov_scale': cov /
+                        10, 'angle_params': np.pi/4}
+            elif i == 4:  # gaussian S-XOR
+                args = {'n': N, 'mean': mean,
+                        'cov_scale': cov/100, 'angle_params': np.pi}
+            elif i == 1:  # gaussian U-XOR
+                args = {'N': N, 'b': rng}
+            elif i == 2:  # gaussian Spiral
+                args = {'N': N, 'K': 2, 'noise': 1, 'density': 0.3, 'rng': rng}
+
+            if i == 1:
+                func = DG.generate_uniform_XOR
+            elif i == 2:
+                func = DG.generate_spirals
+            else:
+                func = DG.generate_gaussian_parity
+
+            self.train_X[i], self.train_y[i] = func(**args)
+            self.test_X[i], self.test_y[i] = func(**args)
+            self.Ctrain_X[i], self.Ctrain_y[i] = func(**args, cc=True)
+            self.Ctest_X[i], self.Ctest_y[i] = func(**args, cc=True)
+
     def get_posterior(self, **kwargs):
         '''
         generating preset true posterior distribution for the datasets
@@ -72,7 +118,7 @@ class IB(DL, TM, MA):
 
         output
         ------
-        x: a vector of x-coordinates of the grid 
+        x: a vector of x-coordinates of the grid
         y: a vector of y-coordinates of the grid
         posterior: a vector of posterior probability
         '''
@@ -103,21 +149,29 @@ class IB(DL, TM, MA):
                     arg['sig'] = 0.1
                     self.truepst[i][j] = DG.true_xor(**arg)
 
-    def get_clf(self):
+    def get_clf(self, param=None, fast=False):
         '''
         train ML models with the simulation datasets
+
+        profile: preset hyper-parameters for fast train. If fast=True, this argument is required
+        fast: if True, trains on pre-defined hyper-parameters without grid searching
         '''
         self.clf = [[[] for i in range(len(self.dtype))]
                     for j in range(2)]  # reinitialize
 
-        for j in range(2):
+        for j in tqdm(range(2), leave=False, desc='train clf'):
+            if j == 0: continue
             for i in range(len(self.dtype)):
+                
                 if j == 0:
-                    args = dict(dset=i, enable=[0, 0, 1, 0, 1, 1], cc=False)
+                    args = dict(param=param[j][i], dset=i, enable=[0, 0, 1, 0, 1, 1], cc=False)
                 else:
-                    args = dict(dset=i, enable=[0, 0, 1, 0, 1, 1], cc=True)
+                    args = dict(param=param[j][i], dset=i, enable=[0, 0, 1, 0, 1, 1], cc=True)
 
-                self.clf[j][i] = self.train(**args)
+                if fast:
+                    self.clf[j][i] = self.fast_train(**args)
+                else:
+                    self.clf[j][i] = self.train(**args)
 
     def get_proba(self):
         '''
@@ -126,14 +180,15 @@ class IB(DL, TM, MA):
         self.estpst = [[[] for i in range(len(self.dtype))]
                        for j in range(2)]  # reinitialize
 
-        for i in range(len(self.clf)):  # either square or circular boundary
+        for i in tqdm(range(len(self.clf)), leave=False, desc='predict_proba'):  # either square or circular boundary
+            if i == 0: continue
             for j, cl in enumerate(self.clf[i]):  # datasets
                 for md in cl:
                     temp = None  # for some reason, this is required for RXOR
                     temp = md.predict_proba(self.mask)
-                    self.estpst[i][j].append(temp[:, 0])
+                    self.estpst[i][j].append(temp[:, 1]) #make sure to choose the right probability corresponding to the true posterior
 
-    def get_hellinger(self):
+    def get_hellinger(self, fast=False):
         '''
         get hellinger distance between estimated and true posterior distributions
 
@@ -143,9 +198,8 @@ class IB(DL, TM, MA):
         where i is a type of unit boundary (square: 0, circle: 1), 
         j is a type of datasets, and k is a type of ML models
         '''
-
         self.hdist = self.compute_hellinger(
-            estP=self.estpst, trueP=self.truepst)
+            estP=self.estpst, trueP=self.truepst, fast=fast)
 
     def get_radialDist(self, dat):
         '''
@@ -164,6 +218,27 @@ class IB(DL, TM, MA):
         '''
         return self.smooth_radial_distance(dat)
 
+    def get_sampledData(self, saved_clf, reps, N_sample):
+        '''
+        '''
+        for rep in tqdm(range(reps), desc='rep'):
+
+            self.get_dataset()
+            self.get_clf(param=saved_clf, fast=True)
+            self.get_proba()
+            self.get_hellinger(fast=True)
+            
+            # append estimate posterior and hellinger distance
+            for j_i, j in enumerate([2,4]):
+                for i in range(len(self.mtype)):
+                    dat_temp = np.column_stack([self.mask, self.estpst[1][j][i]]) #select only the circular boundary
+                    self.estpst_sample[j_i][i] = self.sample(self.estpst_sample[j_i][i], dat_temp, N_sample)
+
+                    dat_temp = np.column_stack([self.mask, self.hdist[1][j][i]]) #select only the circular boundary
+                    self.hdist_sample[j_i][i] = self.sample(self.hdist_sample[j_i][i], dat_temp, N_sample)
+
+        self.load_sampledData(save=True)
+
     def _loadall(self):
         '''
         convenient method that loads datasets, trained classifiers, true posteriors, 
@@ -174,7 +249,7 @@ class IB(DL, TM, MA):
         self.load_clf()
         self.load_est()
         self.load_hellinger()
-        self.load_MTurk()
+        self.load_MTurk(verbose=True)
 
     def get_testpdfSpiral(self, N, K=2, noise=1, acorn=None, density=0.5, rng=1):
         '''

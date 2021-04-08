@@ -137,33 +137,76 @@ class trainModel:
         return post
         # plot_posterior(X, y, newX, newy, post, mods, savefile, h=h)
 
-    def train_store_algo(filename, n=0, cc=False):
-        '''
-        Trains and stores classifiers
+    def fast_train(self, param, dset, enable=[0, 0, 1, 0, 1, 1], cc=False):
 
-        n: dataset being trained on (0-4)
-        '''
-        if path.exists(filename):
-            with open(filename, 'rb') as f:
-                clf = pickle.load(f, encoding='bytes')
-            print('[', filename, '] loaded')
+        # mods = ['KNN', 'SVC', 'SVM', 'XGBoost', 'MLP', 'RF']  # local mods list
+        post = []
+        # l = sum(np.array(enable) == 1)
+        cnt = 0
 
-            return clf
-
+        if cc:
+            train_X, train_y, test_X, test_y = self.Ctrain_X[
+                dset], self.Ctrain_y[dset], self.Ctest_X[dset], self.Ctest_y[dset]
         else:
-            print('begin training..')
-            sTime = datetime.now()
+            train_X, train_y, test_X, test_y = self.train_X[
+                dset], self.train_y[dset], self.test_X[dset], self.test_y[dset]        
 
-            clf = train_algo(n, cc=cc)
+        for i in range(len(enable)):
 
-            if not os.path.isdir(CLFPATH):
-                os.makedirs(CLFPATH)
+            if enable[i] == 1:
+                if i == 0:
+                    temp = KNeighborsClassifier()
+                elif i == 1:
+                    temp = svm.SVC()
+                elif i == 2:
+                    temp = svm.NuSVC()
+                elif i == 3:
+                    temp = xgb.XGBClassifier(objective='binary:logistic')
+                elif i == 4:
+                    temp = MLPClassifier()
+                elif i == 5:
+                    temp = RandomForestClassifier(n_jobs=-1)
+                
+                temp = temp.set_params(**param[cnt].get_params())   
+                temp.fit(train_X, train_y)
+                post.append(temp)
+                cnt += 1
 
-            with open(filename, 'wb') as f:
-                pickle.dump(clf, f)
+            if i == 5:
+                temp = QuadraticDiscriminantAnalysis()
+                temp.fit(train_X, train_y)
+                post.append(temp)
 
-            deltaT = datetime.now() - sTime
-            print('completed after ' + str(deltaT.seconds) + ' seconds')
-            print('saved as [', filename, ']')
+        return post
 
-            return clf
+
+    # def train_store_algo(filename, n=0, cc=False):
+    #     '''
+    #     Trains and stores classifiers
+
+    #     n: dataset being trained on (0-4)
+    #     '''
+    #     if path.exists(filename):
+    #         with open(filename, 'rb') as f:
+    #             clf = pickle.load(f, encoding='bytes')
+    #         print('[', filename, '] loaded')
+
+    #         return clf
+
+    #     else:
+    #         print('begin training..')
+    #         sTime = datetime.now()
+
+    #         clf = train_algo(n, cc=cc)
+
+    #         if not os.path.isdir(CLFPATH):
+    #             os.makedirs(CLFPATH)
+
+    #         with open(filename, 'wb') as f:
+    #             pickle.dump(clf, f)
+
+    #         deltaT = datetime.now() - sTime
+    #         print('completed after ' + str(deltaT.seconds) + ' seconds')
+    #         print('saved as [', filename, ']')
+
+    #         return clf

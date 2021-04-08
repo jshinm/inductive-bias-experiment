@@ -1,19 +1,25 @@
 # Inductive Bias Experiment
 inductive bias experiment for deepnet paper
 
+<!-- 
 TODO:
-- N/A
+- N/A 
+-->
 
-3/xx/21 <br>
-- [ ] translate codes in an object-oriented manner
+3/30/21 <br>
+- [x] Recode the whole project in an object-oriented manner 
+    - implement the dataset loader
+    - implement the dataset trainer
+    - implement the dataset generator
+    - implement the tool for analysis
+    - implement the model trainer
+- [x] Retrain ML models with lesser sample points of simulation datasets (750->100) to match that of human experiment
 - [x] fix jagged spiral posterior
     - resolved by increasing the number of spiral center
-- [ ] add spiral overlapped image to the posterior notebook
-    - try behavioral posterior
+- [x] Explore mean and variance of posterior and hellinger distance with gaussian smoothing
 - [x] implement training class
     - wrote a subclass to interact with the base class
-- [ ] write a notebook that generates publication figures
-    - added human plots
+- [x] Simulate human behavioral experiment setting on ML experiment
 
 3/16/21 <br>
 - [x] extract the estimated posterior along the line at 135 degree

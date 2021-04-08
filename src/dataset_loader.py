@@ -13,46 +13,46 @@ from .dataset_generator import DatasetGenerator as DG
 
 class datasetLoader:
 
-    def generate_dataset(self, N=100, cov=1, rng=1):
-        '''
-        Generates simulation datasets
+    # def generate_dataset(self, N=100, cov=1, rng=1):
+    #     '''
+    #     Generates simulation datasets
 
-        N: number of samples
-        cov: covariance
-        rng: range
+    #     N: number of samples
+    #     cov: covariance
+    #     rng: range
 
-        index = ['Gaussian XOR', 'Uniform XOR', 'Spiral', 'Gaussian R-XOR', 'Gaussian S-XOR']
-        '''
+    #     index = ['Gaussian XOR', 'Uniform XOR', 'Spiral', 'Gaussian R-XOR', 'Gaussian S-XOR']
+    #     '''
 
-        mean = np.array([-rng, -rng])
+    #     mean = np.array([-rng, -rng])
 
-        for i in range(5):
+    #     for i in range(5):
 
-            if i == 0:  # gaussian XOR
-                args = {'n': N, 'mean': mean,
-                        'cov_scale': cov/10, 'angle_params': np.pi}
-            elif i == 3:  # gaussian R-XOR
-                args = {'n': N, 'mean': mean, 'cov_scale': cov /
-                        10, 'angle_params': np.pi/4}
-            elif i == 4:  # gaussian S-XOR
-                args = {'n': N, 'mean': mean,
-                        'cov_scale': cov/100, 'angle_params': np.pi}
-            elif i == 1:  # gaussian U-XOR
-                args = {'N': N, 'b': rng}
-            elif i == 2:  # gaussian Spiral
-                args = {'N': N, 'K': 2, 'noise': 1, 'density': 0.3, 'rng': rng}
+    #         if i == 0:  # gaussian XOR
+    #             args = {'n': N, 'mean': mean,
+    #                     'cov_scale': cov/10, 'angle_params': np.pi}
+    #         elif i == 3:  # gaussian R-XOR
+    #             args = {'n': N, 'mean': mean, 'cov_scale': cov /
+    #                     10, 'angle_params': np.pi/4}
+    #         elif i == 4:  # gaussian S-XOR
+    #             args = {'n': N, 'mean': mean,
+    #                     'cov_scale': cov/100, 'angle_params': np.pi}
+    #         elif i == 1:  # gaussian U-XOR
+    #             args = {'N': N, 'b': rng}
+    #         elif i == 2:  # gaussian Spiral
+    #             args = {'N': N, 'K': 2, 'noise': 1, 'density': 0.3, 'rng': rng}
 
-            if i == 1:
-                func = DG.generate_uniform_XOR
-            elif i == 2:
-                func = DG.generate_spirals
-            else:
-                func = DG.generate_gaussian_parity
+    #         if i == 1:
+    #             func = DG.generate_uniform_XOR
+    #         elif i == 2:
+    #             func = DG.generate_spirals
+    #         else:
+    #             func = DG.generate_gaussian_parity
 
-            self.train_X[i], self.train_y[i] = func(**args)
-            self.test_X[i], self.test_y[i] = func(**args)
-            self.Ctrain_X[i], self.Ctrain_y[i] = func(**args, cc=True)
-            self.Ctest_X[i], self.Ctest_y[i] = func(**args, cc=True)
+    #         self.train_X[i], self.train_y[i] = func(**args)
+    #         self.test_X[i], self.test_y[i] = func(**args)
+    #         self.Ctrain_X[i], self.Ctrain_y[i] = func(**args, cc=True)
+    #         self.Ctest_X[i], self.Ctest_y[i] = func(**args, cc=True)
 
     def load_dataset(self, fname='SimulationData.pickle', save=False):
         '''
@@ -155,6 +155,13 @@ class datasetLoader:
         self.hdist = self._load(fname='HellingerData.pickle',
                                 target=self.hdist, save=save)
 
+    def load_sampledData(self, save=False):
+        '''
+        loads previously computed sampled data or saves current hellinger attributes as a pickle
+        '''
+        self.estpst_sample, self.hdist_sample = self._load(fname='SampledData.pickle',
+                                target=[self.estpst_sample, self.hdist_sample], save=save)
+
     def load_MTurk(self, verbose=False):
         '''
         load MTurk human behavioral experiment data
@@ -204,5 +211,4 @@ class datasetLoader:
             print(f'\nSize of the S-XOR after adding hellinger: {MT_sxor.shape}\
             \nSize of the Spiral after adding hellinger: {MT_spir.shape}')  # 'est', 'real', 'mtype', 'x', 'd', 'y', 'hellinger', 'id'
 
-        self.human = [MT_sxor, MT_spir]
-        
+        self.human = [MT_spir, MT_sxor]
