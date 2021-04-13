@@ -5,6 +5,7 @@ Author: Jong M. Shin
 '''
 
 import numpy as np
+import pandas as pd
 from itertools import product
 from scipy.stats import norm
 from tqdm.notebook import tqdm

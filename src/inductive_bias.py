@@ -220,6 +220,19 @@ class IB(DL, TM, MA):
 
     def get_sampledData(self, saved_clf, reps, N_sample):
         '''
+        simulate human behavioral experiment setting on ML experiment by sampling 
+        'N_sample' number of points from each estimation for 'reps' number of repetition
+
+        saved_clf: load previously saved hyper-parameters of classifer (currently only for spiral and S-XOR)
+        reps: number of independent experiment
+        N_sample: number of sampled points 
+
+        output
+        ------
+        estpst_sample: N x 3 matrix in I X J multi-dimensional list where first two columns of the matrix are x,y coordinates and the third human estimates
+        hdist_sample: N x 3 matrix in I X J multi-dimensional list where first two columns of the matrix are x,y coordinates and the third human hellinger distance
+
+        ** the method automatically overwrites previous pickle file
         '''
         for rep in tqdm(range(reps), desc='rep'):
 
@@ -242,13 +255,15 @@ class IB(DL, TM, MA):
     def _loadall(self):
         '''
         convenient method that loads datasets, trained classifiers, true posteriors, 
-        estimated posteriors, hellinger distance between true and estimated posterior
+        estimated posteriors, hellinger distance between true and estimated posterior,
+        MTurk human data
         '''
         self.load_dataset()
         self.load_posterior()
         self.load_clf()
         self.load_est()
         self.load_hellinger()
+        # self.load_sampledData() #too much memory, switched to manual load
         self.load_MTurk(verbose=True)
 
     def get_testpdfSpiral(self, N, K=2, noise=1, acorn=None, density=0.5, rng=1):
