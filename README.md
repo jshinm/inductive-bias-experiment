@@ -6,6 +6,10 @@ TODO:
 - N/A 
 -->
 
+4/14/21 <br>
+- [x] Update the true posterior tutorial
+- [x] Remove the outdated methods from dataset_generator and add brief docstring for each method
+
 3/30/21 <br>
 - [x] Recode the whole project in an object-oriented manner 
     - implement the dataset loader
