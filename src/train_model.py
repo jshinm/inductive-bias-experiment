@@ -178,35 +178,3 @@ class trainModel:
                 post.append(temp)
 
         return post
-
-
-    # def train_store_algo(filename, n=0, cc=False):
-    #     '''
-    #     Trains and stores classifiers
-
-    #     n: dataset being trained on (0-4)
-    #     '''
-    #     if path.exists(filename):
-    #         with open(filename, 'rb') as f:
-    #             clf = pickle.load(f, encoding='bytes')
-    #         print('[', filename, '] loaded')
-
-    #         return clf
-
-    #     else:
-    #         print('begin training..')
-    #         sTime = datetime.now()
-
-    #         clf = train_algo(n, cc=cc)
-
-    #         if not os.path.isdir(CLFPATH):
-    #             os.makedirs(CLFPATH)
-
-    #         with open(filename, 'wb') as f:
-    #             pickle.dump(clf, f)
-
-    #         deltaT = datetime.now() - sTime
-    #         print('completed after ' + str(deltaT.seconds) + ' seconds')
-    #         print('saved as [', filename, ']')
-
-    #         return clf

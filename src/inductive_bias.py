@@ -266,12 +266,6 @@ class IB(DL, TM, MA):
         # self.load_sampledData() #too much memory, switched to manual load
         self.load_MTurk(verbose=True)
 
-    def get_testpdfSpiral(self, N, K=2, noise=1, acorn=None, density=0.5, rng=1):
-        '''
-        get exploratory true posterior for spiral dataset (deprecated and replaced by get_trueSpiral)
-        '''
-        self.truepst = DG.pdf_spiral(N, K, noise, acorn, density, rng)
-
     def get_colors(colors, inds):
         '''
         get colors for two classes

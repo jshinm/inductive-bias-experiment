@@ -102,8 +102,10 @@ class DatasetGenerator:
 
     @staticmethod
     def generate_spirals(N=100, K=5, noise=0.5, acorn=None, density=0.3, rng=1, cc=None):
-
-        # N number of poinst per class
+        '''
+        method that generates simulation spiral dataset
+        '''
+        # N number of points per class
         # K number of classes
         X = []
         Y = []
@@ -157,6 +159,9 @@ class DatasetGenerator:
 
     @staticmethod
     def generate_mask(rng=3, h=0.01):
+        '''
+        method that generates the grid in the range of [-rng, rng] at h step
+        '''
         l, r = -rng, rng
         x = np.arange(l, r, h)
         y = np.arange(l, r, h)
@@ -166,8 +171,10 @@ class DatasetGenerator:
         return sample  # [:,0], sample[:,1]
 
     @staticmethod
-    def pdf(x, rotate=False, sig=0.25):
-
+    def xor_pdf(x, rotate=False, sig=0.25):
+        '''
+        method that draws gaussian posterior for xor true posterior
+        '''
         # Generates true XOR posterior
         if rotate:
             mu01 = np.array([-0.5, 0])
@@ -196,75 +203,10 @@ class DatasetGenerator:
         return p1/(p0+p1)
 
     @staticmethod
-    def pdf_spiral(N, K=2, noise=1, acorn=None, density=0.5, rng=1):
-
-        # N number of poinst per class
-        # K number of classes
-        X, Y, Z = [], [], []
-        X0, X1, Z0, Z1 = [], [], [], []
-
-        size = int(N/K)  # equal number of points per feature
-
-        if acorn is not None:
-            np.random.seed(acorn)
-
-        if K == 2:
-            turns = 2
-        elif K == 3:
-            turns = 2.5
-        elif K == 5:
-            turns = 3.5
-        elif K == 7:
-            turns = 4.5
-        elif K == 1:
-            turns = 1
-        else:
-            print("sorry, can't currently surpport %s classes " % K)
-            return
-
-        mvt = np.random.multinomial(N, 1/K * np.ones(K))
-
-        if K == 2:
-            r = np.random.uniform(0, rng, size=size)
-            r = np.sort(r)
-
-            t = np.linspace(0, np.pi * 4 * rng, size) + \
-                noise * np.random.normal(0, density, size)
-            dx = r * np.cos(t)
-            dy = r * np.sin(t)
-            
-            Z0 += [1 for i in norm(0, 1).pdf(np.vstack([dx, dy]).T)[:, 0]]
-            Z1 += [1 for i in norm(0, 1).pdf(np.vstack([-dx, -dy]).T)[:, 1]]
-
-            Z += [1 for i in norm(0, 1).pdf(np.vstack([dx, dy]).T)[:, 0]]
-            Z += [0 for i in norm(0, 1).pdf(np.vstack([-dx, -dy]).T)[:, 1]]
-
-            X.append(np.vstack([dx, dy]).T)
-            X.append(np.vstack([-dx, -dy]).T)
-
-            X0.append(np.vstack([dx, dy]).T)
-            X1.append(np.vstack([-dx, -dy]).T)
-
-            Y += [0] * size
-            Y += [1] * size
-        else:
-            for j in range(1, K+1):
-                r = np.linspace(0.01, rng, int(mvt[j-1]))
-                t = np.linspace((j-1) * np.pi * 4 * turns/K,  j * np.pi * 4 * turns/K,
-                                int(mvt[j-1])) + noise * np.random.normal(0, density, int(mvt[j-1]))
-                dx = r * np.cos(t)
-                dy = r * np.sin(t)
-
-                dd = np.vstack([dx, dy]).T
-                X.append(dd)
-                # label
-                Y += [j-1] * int(mvt[j-1])
-
-        return np.vstack(X), np.array(Y).astype(int), Z, np.vstack(X0), np.vstack(X1), Z0, Z1
-
-    @staticmethod
-    def pdf1(x, sig=0.25, rng=1, spirals=270):
-
+    def spiral_pdf(x, sig=0.25, rng=1, spirals=270):
+        '''
+        method that draws gaussian posterior at each spiral center
+        '''
         x0, x1 = DatasetGenerator.spiral_center(spirals, K=2, rng=rng)
 
         mu01 = x0
@@ -285,45 +227,26 @@ class DatasetGenerator:
 
     @staticmethod
     def true_spiral(h=0.01, sig=0.00008, rng=4.3, cc=False, spirals=270, **kwarg):
+        '''
+        method that generates true posterior for spiral dataset
+        '''
         X = DatasetGenerator.generate_mask(rng=rng, h=h)
         z = np.zeros(len(X), dtype=float)
         z[:] = 0.5
 
-        for ii, x in enumerate(tqdm(X)):
+        for ii, x in enumerate(tqdm(X, leave=False)):
             if np.any([x <= -1.0, x >= 1.0]) and cc == False:  # or x.any() > 1
                 pass
             elif np.sqrt((x**2).sum(axis=0)) > 1 and cc == True:
                 pass
             else:
-                nantest = DatasetGenerator.pdf1(
-                    x, sig=sig, rng=3)  # /np.sqrt(4)
+                nantest = DatasetGenerator.spiral_pdf(
+                    x, sig=sig, rng=3, spirals=spirals)
                 if str(nantest) != 'nan':
                     z[ii] = 1-nantest
                 else:
                     # print ('There is {} at {} {}'.format(nantest, ii, x))
                     pass
-                    # break
-            # z[ii] = 1-pdf(x, rotate=rotate, sig=sig)
-
-        # for ii, x in enumerate(tqdm(X)):
-        #     if np.any([x <= -rng, x >= rng]) and cc == False:  # or x.any() > 1
-        #         # if np.any([x <= -1.0, x >= 1.0]) and cc == False:  # or x.any() > 1
-        #         # z[ii] = 0.5
-        #         pass
-        #     elif np.sqrt((x**2).sum(axis=0)) > rng and cc == True:
-        #         # z[ii] = 0.5
-        #         pass
-        #     else:
-        #         nantest = 1 - \
-        #             DatasetGenerator.pdf1(
-        #                 x, rotate=rotate, sig=sig, rng=rng, spirals=spirals)
-        #         if str(nantest) != 'nan':
-        #             pass
-        #         else:
-        #             print('There is {} at {} {}'.format(nantest, ii, x))
-        #             break
-        #         z[ii] = nantest
-        #     # z[ii] = 1-pdf(x, rotate=rotate, sig=sig)
 
         z = (z - min(z)) / (max(z) - min(z))
 
@@ -331,8 +254,10 @@ class DatasetGenerator:
 
     @staticmethod
     def spiral_center(N, K=2, rng=3, **kwargs):
-
-        # N number of poinst per class
+        '''
+        method that generates spiral centers where gaussian is drawn at each center
+        '''
+        # N number of points per class
         # K number of classes
         X0, X1 = [], []
 
@@ -353,6 +278,9 @@ class DatasetGenerator:
 
     @staticmethod
     def true_xor(rng=3, h=0.01, rotate=False, sig=0.25, cc=False, **kwarg):
+        '''
+        method that generates true posterior for xor datasets
+        '''
         X = DatasetGenerator.generate_mask(rng=rng, h=h)
 
         z = np.zeros(len(X), dtype=float)
@@ -363,8 +291,8 @@ class DatasetGenerator:
             elif np.sqrt((x**2).sum(axis=0)) > 1 and cc == True:
                 z[ii] = 0.5
             else:
-                z[ii] = 1-DatasetGenerator.pdf(x, rotate=rotate, sig=sig)
-            # z[ii] = 1-pdf(x, rotate=rotate, sig=sig)
+                z[ii] = 1-DatasetGenerator.xor_pdf(x, rotate=rotate, sig=sig)
+            # z[ii] = 1-xor_pdf(x, rotate=rotate, sig=sig)
 
         z = (z - min(z)) / (max(z) - min(z))
 
@@ -372,7 +300,9 @@ class DatasetGenerator:
 
     @staticmethod
     def true_Uxor(rng=3, h=0.01, cc=False, **kwarg):
-
+        '''
+        method that generates true posterior for uniform xor dataset
+        '''
         X = DatasetGenerator.generate_mask(rng=rng, h=h)
 
         l = -1
@@ -400,7 +330,9 @@ class DatasetGenerator:
 
     @staticmethod
     def generate_uniform_XOR(b=1, N=750, cc=False, train=True):
-
+        '''
+        method that generates simulation uniform xor dataset
+        '''
         boundary = np.random.multinomial(N, [1/4.]*4)
         bcum = np.cumsum(boundary)
 
