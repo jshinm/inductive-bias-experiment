@@ -6,8 +6,7 @@ Author: Jong M. Shin
 
 import numpy as np
 from scipy.stats import norm
-from tqdm.notebook import tqdm_notebook as tqdm  # compatible with jupyter
-
+from tqdm.notebook import tqdm # compatible with jupyter
 
 class DatasetGenerator:
 
@@ -234,7 +233,7 @@ class DatasetGenerator:
         z = np.zeros(len(X), dtype=float)
         z[:] = 0.5
 
-        for ii, x in enumerate(tqdm(X, leave=False)):
+        for ii, x in enumerate(tqdm(X, leave=False, ascii=True)):
             if np.any([x <= -1.0, x >= 1.0]) and cc == False:  # or x.any() > 1
                 pass
             elif np.sqrt((x**2).sum(axis=0)) > 1 and cc == True:
