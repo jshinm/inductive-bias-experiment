@@ -6,7 +6,7 @@ Author: Jong M. Shin
 
 import numpy as np
 from scipy.stats import norm
-from tqdm.notebook import tqdm  # compatible with jupyter
+from tqdm.notebook import tqdm_notebook as tqdm  # compatible with jupyter
 
 
 class DatasetGenerator:
