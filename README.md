@@ -6,6 +6,10 @@ TODO:
 - N/A 
 -->
 
+4/19/21 <br>
+- [x] Corrected gaussian smoothing experiment
+    - method of smoothing changed from convolving circle + 2D gaussian to nearest neighbor + multidimentional 1D gaussian (scipy) 
+
 4/14/21 <br>
 - [x] Update the true posterior tutorial
 - [x] Remove the outdated methods from dataset_generator and add brief docstring for each method

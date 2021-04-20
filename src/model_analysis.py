@@ -9,6 +9,9 @@ import pandas as pd
 from itertools import product
 from scipy.stats import norm
 from tqdm.notebook import tqdm
+from scipy.ndimage import gaussian_filter
+from scipy.spatial import KDTree
+# from skimage.filters import gaussian
 from .dataset_generator import DatasetGenerator as DG
 
 
@@ -172,7 +175,7 @@ class modelAnalysis(DG):
 
         return np.vstack([dat, target[idx_selected]])
 
-    def smooth_gaussian_distance(self, dat, radius=1, step=0.5, method='mean'):
+    def smooth_gaussian_distance(self, dat, radius=1, step=0.5, method='mean', sigma=1, k=10):
         '''
         Applies gaussian smoothing over a grid. Takes N x 3 matrix where first two columns are X and Y coordinates of the grid and the last column is variable of interest.
 
@@ -192,20 +195,42 @@ class modelAnalysis(DG):
         X = np.arange(xL, xR, step).round(1)
         Y = np.arange(yT, yB, step).round(1)
 
-        XY = list(product(X,Y))
+        XY = list(product(X,Y)) #cartesian product (eg aa, ab, ac, ba, bb, bc ...)
 
         out = []
 
+        kd = KDTree(grid) #instantiate KDTree
+        
         for i in tqdm(range(len(XY)),leave=False):
-            x = dat[self._euclidean(dat, XY[i]) < radius][:,0]
-            y = dat[self._euclidean(dat, XY[i]) < radius][:,1]
-            a = dat[self._euclidean(dat, XY[i]) < radius][:,2]
-            if method == 'mean':
-                out.append(self._gauss2d(x=x, y=y, x0=XY[i][0], y0=XY[i][1], A=a).mean())
-            elif method == 'var':
-                out.append(self._gauss2d(x=x, y=y, x0=XY[i][0], y0=XY[i][1], A=a).var())
+            # temp = dat[self._euclidean(dat, XY[i]) < radius]
+            # x, y, a = temp[:,0], temp[:,1], temp[:,2]
 
-        return [XY, out]
+            a = kd.query(XY[i],k=k)[1]
+            a = dat[:,2][a]
+            
+            if method == 'mean':
+                out.append(a.mean())
+            elif method == 'var':
+                out.append(a.var())
+            elif method == 'max':
+                out.append(a.max())
+                
+        # multidirectional 1-D gaussian smoothing
+        # the output vector is reshaped into 2-D image before smoothing
+        # smoothed image is vectorized again
+        def smooth(out):
+            out2 = np.array(out).astype(float)
+            size = np.sqrt(out2.shape[0]).astype(int)
+            out2 = out2.reshape(size,size)
+            out2 = gaussian_filter(out2,sigma=sigma).flatten()
+
+            return out2
+        
+        # dat[:,2] = smooth(dat[:,2])
+        alls = smooth(out)
+
+        # [XY coordinates, original, downsampling only, downsampling + gaus smoothing]
+        return [XY, dat, out, alls]
 
     @staticmethod
     def pointwise_gridAverage(dat):
