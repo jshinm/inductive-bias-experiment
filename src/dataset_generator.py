@@ -167,7 +167,7 @@ class DatasetGenerator:
         x, y = np.meshgrid(x, y)
         sample = np.c_[x.ravel(), y.ravel()]
 
-        return sample  # [:,0], sample[:,1]
+        return sample
 
     @staticmethod
     def xor_pdf(x, rotate=False, sig=0.25):
@@ -225,7 +225,7 @@ class DatasetGenerator:
         return p0/(p0+p1)
 
     @staticmethod
-    def true_spiral(h=0.01, sig=0.00008, rng=4.3, cc=False, spirals=270, **kwarg):
+    def true_spiral(h=0.01, sig=0.00008, rng=3, cc=False, spirals=270, **kwarg):
         '''
         method that generates true posterior for spiral dataset
         '''

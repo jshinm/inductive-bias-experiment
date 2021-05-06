@@ -126,7 +126,7 @@ class IB(DL, TM, MA):
 
         for i in range(2):
 
-            for j in range(self.dtype):
+            for j in range(len(self.dtype)):
 
                 arg = kwargs.copy()  # reinitialize args
 
@@ -153,14 +153,14 @@ class IB(DL, TM, MA):
         '''
         train ML models with the simulation datasets
 
-        profile: preset hyper-parameters for fast train. If fast=True, this argument is required
+        param: preset hyper-parameters for fast train. If fast=True, this argument is required
         fast: if True, trains on pre-defined hyper-parameters without grid searching
         '''
         self.clf = [[[] for i in range(len(self.dtype))]
                     for j in range(2)]  # reinitialize
 
         for j in tqdm(range(2), leave=False, desc='train clf'):
-            if j == 0: continue
+            if j == 0: continue #skipping unit square
             for i in range(len(self.dtype)):
                 
                 if j == 0:
@@ -218,7 +218,7 @@ class IB(DL, TM, MA):
         '''
         return self.smooth_radial_distance(dat)
 
-    def get_sampledData(self, saved_clf, reps, N_sample):
+    def get_sampledData(self, saved_clf, reps, N_sample, **kwargs):
         '''
         simulate human behavioral experiment setting on ML experiment by sampling 
         'N_sample' number of points from each estimation for 'reps' number of repetition
@@ -234,9 +234,11 @@ class IB(DL, TM, MA):
 
         ** the method automatically overwrites previous pickle file
         '''
+        self.get_posterior(**kwargs) #re-generate true posterior
+
         for rep in tqdm(range(reps), desc='rep'):
 
-            self.get_dataset()
+            self.get_dataset() #sampling at N=100 by default
             self.get_clf(param=saved_clf, fast=True)
             self.get_proba()
             self.get_hellinger(fast=True)

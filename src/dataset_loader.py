@@ -118,8 +118,11 @@ class datasetLoader:
         '''
         loads previously computed sampled data or saves current hellinger attributes as a pickle
         '''
-        self.estpst_sample, self.hdist_sample = self._load(fname='SampledData.pickle',
-                                target=[self.estpst_sample, self.hdist_sample], save=save)
+        self.estpst_sample, self.hdist_sample, self.truepst = self._load(fname='SampledData.pickle',
+                                target=[self.estpst_sample, self.hdist_sample, self.truepst], save=save)
+
+        # self.estpst_sample, self.hdist_sample = self._load(fname='SampledData.pickle',
+        #                         target=[self.estpst_sample, self.hdist_sample], save=save)
 
     def load_MTurk(self, verbose=False):
         '''

@@ -180,9 +180,10 @@ class modelAnalysis(DG):
         Applies gaussian smoothing over a grid. Takes N x 3 matrix where first two columns are X and Y coordinates of the grid and the last column is variable of interest.
 
         dat: N x 3 matrix
-        radius: radius of circular ROI where gaussian smoothing will be applied (default: 1)
-        step: sparsity of circular ROI center (default: 0.5)
-        method: method of smoothing, options='mean', 'var' (default: mean)
+        step: degree of downsampling when convolving (default: 0.5)
+        method: method of convolution, options='mean', 'var' (default: mean)
+        sigma: paramter for gaussian smoothing (default: 1.0)
+        k: number of k-nearest neighbor for interpolation (default: 10)
 
         output
         ------
@@ -199,9 +200,13 @@ class modelAnalysis(DG):
 
         out = []
 
+        if method == None:            
+            k = 1 # when no method is chosen, one nearest neighbor is used for interpolation
+            XY = self.mask # same size of the grid will be yield
+
         kd = KDTree(grid) #instantiate KDTree
         
-        for i in tqdm(range(len(XY)),leave=False):
+        for i in tqdm(range(len(XY)), leave=False):
             # temp = dat[self._euclidean(dat, XY[i]) < radius]
             # x, y, a = temp[:,0], temp[:,1], temp[:,2]
 
@@ -214,6 +219,8 @@ class modelAnalysis(DG):
                 out.append(a.var())
             elif method == 'max':
                 out.append(a.max())
+            else:
+                out.append(a)
                 
         # multidirectional 1-D gaussian smoothing
         # the output vector is reshaped into 2-D image before smoothing
@@ -226,7 +233,6 @@ class modelAnalysis(DG):
 
             return out2
         
-        # dat[:,2] = smooth(dat[:,2])
         alls = smooth(out)
 
         # [XY coordinates, original, downsampling only, downsampling + gaus smoothing]

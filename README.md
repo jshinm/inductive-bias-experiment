@@ -6,6 +6,11 @@ TODO:
 - N/A 
 -->
 
+5/5/21 <br>
+- [x] retrain ML models at the same sample size as human experiment
+- [x] human true posteriors have been fixed and hellinger distances were recalculated
+- [x] smooth_gaussian_distance can now return the same sized grid and uses the single nearest neighbor for interpolation followed by multidirectional 1-D guassian smoothing
+
 4/19/21 <br>
 - [x] Corrected gaussian smoothing experiment
     - method of smoothing changed from convolving circle + 2D gaussian to nearest neighbor + multidimentional 1D gaussian (scipy) 
