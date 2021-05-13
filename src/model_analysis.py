@@ -8,11 +8,15 @@ import numpy as np
 import pandas as pd
 import math
 from itertools import product
-from scipy.stats import norm
 from tqdm.notebook import tqdm
+
+from scipy.stats import norm
 from scipy.ndimage import gaussian_filter
 from scipy.spatial import KDTree, cKDTree
+from scipy.stats import gaussian_kde
+from scipy.integrate import quad
 # from skimage.filters import gaussian
+
 from .dataset_generator import DatasetGenerator as DG
 
 
@@ -66,13 +70,14 @@ class modelAnalysis(DG):
         Hellinger distance for continuous probability distributions
         '''
 
-        f = scipy.stats.gaussian_kde(p)
-        g = scipy.stats.gaussian_kde(q)
+        f = gaussian_kde(p)
+        g = gaussian_kde(q)
 
         def integrand(x):
             return (f(x)**0.5 - g(x)**0.5)**2
 
         ans, err = quad(integrand, -np.inf, np.inf)
+
         return f, g, ans / 2
 
     def compute_hellinger(self, estP, trueP, fast=False):
