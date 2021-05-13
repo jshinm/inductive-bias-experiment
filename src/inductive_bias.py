@@ -254,6 +254,11 @@ class IB(DL, TM, MA):
 
         self.load_sampledData(save=True)
 
+    def get_linegrid(self):
+        '''
+        '''
+        return None
+
     def _loadall(self):
         '''
         convenient method that loads datasets, trained classifiers, true posteriors, 

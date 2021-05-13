@@ -6,11 +6,12 @@ Author: Jong M. Shin
 
 import numpy as np
 import pandas as pd
+import math
 from itertools import product
 from scipy.stats import norm
 from tqdm.notebook import tqdm
 from scipy.ndimage import gaussian_filter
-from scipy.spatial import KDTree
+from scipy.spatial import KDTree, cKDTree
 # from skimage.filters import gaussian
 from .dataset_generator import DatasetGenerator as DG
 
@@ -79,14 +80,15 @@ class modelAnalysis(DG):
         compute hellinger distance of p and q distribution
         '''
         hdist = []
-        
+
         for k in tqdm(range(2), desc='hellinger', leave=False):
             hdist.append([])
             for i in tqdm(range(5), desc='helliner-inner', leave=False):
                 hdist[k].append([])
                 for j in range(4):
                     hdist[k][i].append([])
-                    if k == 0: continue
+                    if k == 0:
+                        continue
                     if i == 2 or i == 4:
                         hdist[k][i][j] = self._hellinger_explicit(
                             trueP[k][i][2], estP[k][i][j])
@@ -153,7 +155,7 @@ class modelAnalysis(DG):
             print('\n' + '#'*20
                   + '\n# outside: ' + str(cout)
                   + '\n# inside:  ' + str(cin) + '\n' + '#'*20)
-        
+
         return [new_rad, new_dat]
 
     def _gauss2d(self, x, y, x0, y0, A, sig_x=1, sig_y=1):
@@ -168,9 +170,9 @@ class modelAnalysis(DG):
     @staticmethod
     def sample(dat, target, N):
         '''
-        Randomly samples from the target and append on dat, thus the dat and the target must be of the same dimension
+        Randomly samples from the target and append on dat, thus the dat and the target must be of the same length
         '''
-        temp_idx = np.arange(0, target.shape[0],1)
+        temp_idx = np.arange(0, target.shape[0], 1)
         idx_selected = np.random.choice(temp_idx, N)
 
         return np.vstack([dat, target[idx_selected]])
@@ -189,30 +191,31 @@ class modelAnalysis(DG):
         ------
         List of (X,Y) coordinates of circular ROI center and smoothed gaussian variable of interest
         '''
-        grid = dat[:,:2]
-        xL, xR = min(dat[:,0]), max(dat[:,0])
-        yT, yB = min(dat[:,1]), max(dat[:,1])
+        grid = dat[:, :2]
+        xL, xR = min(dat[:, 0]), max(dat[:, 0])
+        yT, yB = min(dat[:, 1]), max(dat[:, 1])
 
         X = np.arange(xL, xR, step).round(1)
         Y = np.arange(yT, yB, step).round(1)
 
-        XY = list(product(X,Y)) #cartesian product (eg aa, ab, ac, ba, bb, bc ...)
+        # cartesian product (eg aa, ab, ac, ba, bb, bc ...)
+        XY = list(product(X, Y))
 
         out = []
 
-        if method == None:            
-            k = 1 # when no method is chosen, one nearest neighbor is used for interpolation
-            XY = self.mask # same size of the grid will be yield
+        if method == None:
+            k = 1  # when no method is chosen, one nearest neighbor is used for interpolation
+            XY = self.mask  # same size of the grid will be yield
 
-        kd = KDTree(grid) #instantiate KDTree
-        
+        kd = KDTree(grid)  # instantiate KDTree
+
         for i in tqdm(range(len(XY)), leave=False):
             # temp = dat[self._euclidean(dat, XY[i]) < radius]
             # x, y, a = temp[:,0], temp[:,1], temp[:,2]
 
-            a = kd.query(XY[i],k=k)[1]
-            a = dat[:,2][a]
-            
+            a = kd.query(XY[i], k=k)[1]
+            a = dat[:, 2][a]
+
             if method == 'mean':
                 out.append(a.mean())
             elif method == 'var':
@@ -221,18 +224,18 @@ class modelAnalysis(DG):
                 out.append(a.max())
             else:
                 out.append(a)
-                
+
         # multidirectional 1-D gaussian smoothing
         # the output vector is reshaped into 2-D image before smoothing
         # smoothed image is vectorized again
         def smooth(out):
             out2 = np.array(out).astype(float)
             size = np.sqrt(out2.shape[0]).astype(int)
-            out2 = out2.reshape(size,size)
-            out2 = gaussian_filter(out2,sigma=sigma).flatten()
+            out2 = out2.reshape(size, size)
+            out2 = gaussian_filter(out2, sigma=sigma).flatten()
 
             return out2
-        
+
         alls = smooth(out)
 
         # [XY coordinates, original, downsampling only, downsampling + gaus smoothing]
@@ -251,7 +254,44 @@ class modelAnalysis(DG):
         N x 3 array where the structure of the input is maintained and duplicates are removed
         '''
         dat = pd.DataFrame(dat, columns=['x', 'y', 'c']).astype(float)
-        dat['xy'] = dat['x'].astype(str).str.cat(dat['y'].astype(str),sep=',')
+        dat['xy'] = dat['x'].astype(str).str.cat(dat['y'].astype(str), sep=',')
         dat = dat.groupby('xy').mean().reset_index(drop=True)
-        
+
         return dat
+
+    # def select_region(post, degree=0, b=0, r=0.1, step=0.1):
+    #     '''
+    #     r: radius of search parameter
+    #     degree: degree of an angle
+    #     b: y-intercept
+    #     step: step of search w.r.t x-coordinate
+    #     '''
+    #     x = 0
+    #     tree = cKDTree(uX)  # putting [X,Y] coord. into scipy tree
+    #     theta = math.radians(degree)
+    #     m = math.tan(theta)
+    #     new_post = post
+    #     new_idx = set()
+    #     i = 0
+    #     end = True
+
+    #     while end:
+    #         i += 1  # counter for run-on
+
+    #         y = m * x + b
+    #         idx_p = tree.query_ball_point([x, y], r)
+    #         idx_n = tree.query_ball_point([-x, -y], r)
+
+    #         if len(idx_p) == 0 and len(idx_n) == 0:
+    #             end = False
+
+    #         if i == 9999:
+    #             end = False
+    #             print('Reached max iteration')
+
+    #         new_idx = new_idx.union(idx_p)
+    #         new_idx = new_idx.union(idx_n)
+
+    #         x += step
+
+    #     return post[list(new_idx)], list(new_idx)
