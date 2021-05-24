@@ -264,39 +264,70 @@ class modelAnalysis(DG):
 
         return dat
 
-    # def select_region(post, degree=0, b=0, r=0.1, step=0.1):
-    #     '''
-    #     r: radius of search parameter
-    #     degree: degree of an angle
-    #     b: y-intercept
-    #     step: step of search w.r.t x-coordinate
-    #     '''
-    #     x = 0
-    #     tree = cKDTree(uX)  # putting [X,Y] coord. into scipy tree
-    #     theta = math.radians(degree)
-    #     m = math.tan(theta)
-    #     new_post = post
-    #     new_idx = set()
-    #     i = 0
-    #     end = True
+    def extract_human_coord(self):
+        '''
+        extracts individual coordinates from MTurk human experiment data
 
-    #     while end:
-    #         i += 1  # counter for run-on
+        output
+        ------
 
-    #         y = m * x + b
-    #         idx_p = tree.query_ball_point([x, y], r)
-    #         idx_n = tree.query_ball_point([-x, -y], r)
+        a list of two nested 126 dataframes with x,y coordinates 
+        '''
 
-    #         if len(idx_p) == 0 and len(idx_n) == 0:
-    #             end = False
+        # id = 7
+        df_spir = pd.DataFrame(self.human[0]).groupby(by=7)
+        df_sxor = pd.DataFrame(self.human[1]).groupby(by=7)
+        
+        # (x,y) = (3,5)
+        df_spir = [i[0] for i in df_spir] #i[1][[3,5]]
+        df_sxor = [i[0] for i in df_sxor]
 
-    #         if i == 9999:
-    #             end = False
-    #             print('Reached max iteration')
+        if np.array_equal(df_spir,df_sxor):
+            print('User sequence match and dataframe exported')
 
-    #         new_idx = new_idx.union(idx_p)
-    #         new_idx = new_idx.union(idx_n)
+            df_spir = pd.DataFrame(self.human[0]).groupby(by=7)
+            df_sxor = pd.DataFrame(self.human[1]).groupby(by=7)
 
-    #         x += step
+            df_spir = [i[1][[3,5]] for i in df_spir]
+            df_sxor = [i[1][[3,5]] for i in df_sxor]
+            self.humanLoc = [df_spir,df_sxor]
+        else:
+            print('User sequence does not match')
+            self.humanLoc = np.array_equal(df_spir,df_sxor)
 
-    #     return post[list(new_idx)], list(new_idx)
+    def select_linear_region(self, post, degree=0, b=0, r=0.1, step=0.1):
+        '''
+        r: radius of search parameter
+        degree: degree of an angle
+        b: y-intercept
+        step: step of search w.r.t x-coordinate
+       
+        **uses current ib.mask to generate search tree
+        '''        
+        tree = cKDTree(self.mask) #putting [X,Y] coord. into scipy tree    
+        theta = math.radians(degree)
+        m = math.tan(theta)
+        new_idx = set()
+        i = 0
+        end = True
+        x = self.mask[:,0].min() #left most X-coord
+        x_r = self.mask[:,0].max() #right most X-coord
+        
+        while end:
+            i += 1 #counter for run-on
+
+            y = m * x + b
+            idx_p = tree.query_ball_point([x, y], r)
+
+            if x > x_r:
+                end = False
+
+            if len(idx_p) == 0:
+                x += step
+                continue
+
+            new_idx = new_idx.union(idx_p)
+
+            x += step
+        
+        return post[list(new_idx)], list(new_idx)

@@ -3,6 +3,11 @@ inductive bias experiment for deepnet paper
 
 # Log
 
+## 5/23/21
+- fix the colorbar range (equalize to `range(0,1)`)
+- produce line plot over 0-180 degree
+- match the exact coordinates between human and machine
+
 ## 5/13/21 
 - assess estimated posteriors over a line drawn at 135 degree
 - MTurk simulator written in jupyter
