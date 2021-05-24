@@ -3,7 +3,7 @@ inductive bias experiment for deepnet paper
 
 # Log
 
-## 5/23/21
+## 5/24/21
 - fix the colorbar range (equalize to `range(0,1)`)
 - produce line plot over 0-180 degree
 - match the exact coordinates between human and machine
