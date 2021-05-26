@@ -192,11 +192,12 @@ class IB(DL, TM, MA):
                 if j in dset_limiter:
                     for md in cl:
                         temp = None  # for some reason, this is required for RXOR
-                        if human_idx:
+                        if human_idx != None:
                             temp_idx = np.argmax(dset_limiter == j)
                             temp = md.predict_proba(self.humanLoc[temp_idx][human_idx].to_numpy())
                         else:
                             temp = md.predict_proba(self.mask)
+
                         self.estpst[i][j].append(temp[:, 1]) #make sure to choose the right probability corresponding to the true posterior
 
     def get_hellinger(self, fast=False, rep=None):
@@ -209,7 +210,7 @@ class IB(DL, TM, MA):
         where i is a type of unit boundary (square: 0, circle: 1), 
         j is a type of datasets, and k is a type of ML models
         '''
-        if rep: #exact coordinate method not implemented yet
+        if rep != None: #exact coordinate method not implemented yet
             pass
         else:
             self.hdist = self.compute_hellinger(
@@ -264,18 +265,18 @@ class IB(DL, TM, MA):
             # append estimate posterior and hellinger distance
             for j_i, j in enumerate([2,4]):
                 for i in range(len(self.mtype)):
-                    if rep:
+                    if rep != None:
                         dat_temp = np.column_stack([self.humanLoc[j_i][rep], self.estpst[1][j][i]]) #select only the circular boundary
-                        self.estpst_sample[j_i][i] = np.vstack([self.estpst_sample[j_i][i],dat_temp])
+                        self.estpst_sample[j_i][i] = np.vstack([self.estpst_sample[j_i][i],dat_temp]).astype(float)
                     else:
                         dat_temp = np.column_stack([self.mask, self.estpst[1][j][i]]) #select only the circular boundary
-                        self.estpst_sample[j_i][i] = self.sample(self.estpst_sample[j_i][i], dat_temp, N_sample)
+                        self.estpst_sample[j_i][i] = self.sample(self.estpst_sample[j_i][i], dat_temp, N_sample).astype(float)
 
-                    if rep: #exact coordinate method not implemented yet
+                    if rep != None: #exact coordinate method not implemented yet
                         pass
                     else:
                         dat_temp = np.column_stack([self.mask, self.hdist[1][j][i]]) #select only the circular boundary
-                        self.hdist_sample[j_i][i] = self.sample(self.hdist_sample[j_i][i], dat_temp, N_sample)
+                        self.hdist_sample[j_i][i] = self.sample(self.hdist_sample[j_i][i], dat_temp, N_sample).astype(float)
 
         self.load_sampledData(save=True)
 
