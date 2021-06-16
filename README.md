@@ -3,6 +3,9 @@ inductive bias experiment for deepnet paper
 
 # Log
 
+## 6/16/21
+- change the color scheme for rotational line plot
+
 ## 5/24/21
 - fix the colorbar range (equalize to `range(0,1)`)
 - produce line plot over 0-180 degree
