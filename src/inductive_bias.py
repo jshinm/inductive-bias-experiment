@@ -7,7 +7,7 @@ Author: Jong M. Shin
 import os
 import pickle
 import numpy as np
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 from datetime import datetime
 from .dataset_generator import DatasetGenerator as DG
 from .dataset_loader import datasetLoader as DL

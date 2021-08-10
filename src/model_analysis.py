@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import math
 from itertools import product
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 from scipy.stats import norm
 from scipy.ndimage import gaussian_filter
