@@ -1,5 +1,5 @@
 # Inductive Bias Experiment
-By Jong M. Shin at Johns Hopkins University
+By Jong M. Shin et al at Johns Hopkins University
 
 # Introduction
 inductive bias experiment for deepnet paper
