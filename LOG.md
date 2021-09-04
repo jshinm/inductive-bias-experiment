@@ -1,5 +1,8 @@
 # Log
 
+## 9/02/21
+- add class 1 posterior for figure 3
+
 ## 9/01/21
 - modify figures based on Jovo's feedback
 - use more descriptive legends and labels
