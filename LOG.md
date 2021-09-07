@@ -1,5 +1,14 @@
 # Log
 
+## 9/06/21
+- test behavior of deeper MLP
+
+## 9/05/21
+- add vertical lines to differentiate extrapolative regions
+- add radial kernel label for svm
+- adjust colorbar range for fig 2
+- collated panel for fig 3
+
 ## 9/02/21
 - add class 1 posterior for figure 3
 
