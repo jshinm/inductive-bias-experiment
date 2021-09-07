@@ -149,7 +149,7 @@ class trainModel:
                 dset], self.Ctrain_y[dset], self.Ctest_X[dset], self.Ctest_y[dset]
         else:
             train_X, train_y, test_X, test_y = self.train_X[
-                dset], self.train_y[dset], self.test_X[dset], self.test_y[dset]        
+                dset], self.train_y[dset], self.test_X[dset], self.test_y[dset]
 
         for i in range(len(enable)):
 
@@ -166,8 +166,8 @@ class trainModel:
                     temp = MLPClassifier()
                 elif i == 5:
                     temp = RandomForestClassifier(n_jobs=-1)
-                
-                temp = temp.set_params(**param[cnt].get_params())   
+
+                temp = temp.set_params(**param[cnt].get_params())
                 temp.fit(train_X, train_y)
                 post.append(temp)
                 cnt += 1
