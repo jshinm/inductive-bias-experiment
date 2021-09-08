@@ -189,9 +189,8 @@ class trainModel:
 
         post = []
 
-        if cc:
-            train_X, train_y, test_X, test_y = self.Ctrain_X[
-                dset], self.Ctrain_y[dset], self.Ctest_X[dset], self.Ctest_y[dset]
+        train_X, train_y, test_X, test_y = self.Ctrain_X[
+            dset], self.Ctrain_y[dset], self.Ctest_X[dset], self.Ctest_y[dset]
 
         temp = MLPClassifier()
         temp = temp.set_params(**param[cnt].get_params())
