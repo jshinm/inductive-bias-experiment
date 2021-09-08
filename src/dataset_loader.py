@@ -174,3 +174,11 @@ class datasetLoader:
             \nSize of the Spiral after adding hellinger: {MT_spir.shape}')  # 'est', 'real', 'mtype', 'x', 'd', 'y', 'hellinger', 'id'
 
         self.human = [MT_spir, MT_sxor]
+
+    def load_MLPs(self, save=False):
+        '''
+        load trained MLP classifiers, posterior and hellinger from the mathematical true posterior
+        '''
+
+        self.mlps = self._load(fname='MLPData.pickle',
+                              target=self.mlps, save=save)

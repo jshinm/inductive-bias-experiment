@@ -178,3 +178,23 @@ class trainModel:
                 post.append(temp)
 
         return post
+
+    def train_MLPs(self, param, dset):
+        '''
+        Train customized MLPs of different parameters
+
+        param: dict, list of parameters for MLP (hidden_layer_sizes: tuple)
+        dset: int, index for dataset
+        '''
+
+        post = []
+
+        if cc:
+            train_X, train_y, test_X, test_y = self.Ctrain_X[
+                dset], self.Ctrain_y[dset], self.Ctest_X[dset], self.Ctest_y[dset]
+
+        temp = MLPClassifier()
+        temp = temp.set_params(**param[cnt].get_params())
+        temp.fit(train_X, train_y)
+
+        return post

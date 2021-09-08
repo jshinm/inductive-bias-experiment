@@ -34,6 +34,7 @@ class IB(DL, TM, MA):
         self.truepst = [[[] for i in range(d)] for j in range(2)]
         self.estpst = [[[] for i in range(d)] for j in range(2)]
         self.clf = [[[] for i in range(d)] for j in range(2)]
+        self.mlps = [[[] for i in range(3)] for j in range(2)] # i=0: trained clf, i=1: posterior, i=2: hellinger
         self.hdist = None
         self.human = None
         seed = np.array([[],[],[]]).T
@@ -162,9 +163,11 @@ class IB(DL, TM, MA):
                     for j in range(2)]  # reinitialize
 
         for j in tqdm(range(2), leave=False, desc='train clf'):
-            if j == 0: continue #skipping unit square
+            if j == 0: 
+                continue #skipping unit square
+
             for i in range(len(self.dtype)):
-                
+
                 if j == 0:
                     args = dict(param=param[j][i], dset=i, enable=[0, 0, 1, 0, 1, 1], cc=False)
                 else:
@@ -174,6 +177,18 @@ class IB(DL, TM, MA):
                     self.clf[j][i] = self.fast_train(**args)
                 else:
                     self.clf[j][i] = self.train(**args)
+
+    def get_MLPs(self, param=None):
+        '''
+        train new MLP classifier, get its posterior probabilty and hellinger distance from corresponding mathematical true poserior
+
+        param: dict, list of parameters for MLP (hidden_layer_sizes: tuple)
+        '''
+
+        for i, dt in enumerate([2,4]): #i=2: sprial, i=4: sxor
+            self.mlps[i][0].append(self.train_MLPs(param=param, dset=dt)) #clf
+            self.mlps[i][1].append(self.mlps[i][0][-1].predict_proba(self.mask)) #posterior
+            # self.mlps[i][2].append(self.compute_hellinger(estP=self.mlps[i][1][-1], trueP=self.truepst[dt], fast=True)) #hellinger
 
     def get_proba(self, human_idx=None):
         '''
@@ -187,7 +202,9 @@ class IB(DL, TM, MA):
         dset_limiter = np.array([2,4]) #limits only spiral and sxor
 
         for i in tqdm(range(len(self.clf)), leave=False, desc='predict_proba'):  # either square or circular boundary
-            if i == 0: continue
+            if i == 0:
+                continue
+
             for j, cl in enumerate(self.clf[i]):  # datasets
                 if j in dset_limiter:
                     for md in cl:
@@ -233,21 +250,19 @@ class IB(DL, TM, MA):
         '''
         return self.smooth_radial_distance(dat)
 
-    def get_sampledData(self, saved_clf, reps, N_sample, **kwargs):
+    def get_sampledData(self, saved_clf, reps, N_sample, save=True, **kwargs):
         '''
         simulate human behavioral experiment setting on ML experiment by sampling 
         'N_sample' number of points from each estimation for 'reps' number of repetition
 
         saved_clf: load previously saved hyper-parameters of classifer (currently only for spiral and S-XOR)
         reps: number of independent experiment
-        N_sample: number of sampled points 
+        N_sample: number of sampled points
 
         output
         ------
         estpst_sample: N x 3 matrix in I X J multi-dimensional list where first two columns of the matrix are x,y coordinates and the third human estimates
         hdist_sample: N x 3 matrix in I X J multi-dimensional list where first two columns of the matrix are x,y coordinates and the third human hellinger distance
-
-        ** the method automatically overwrites previous pickle file
         '''
 
         seed = np.array([[],[],[]]).T
@@ -278,7 +293,8 @@ class IB(DL, TM, MA):
                         dat_temp = np.column_stack([self.mask, self.hdist[1][j][i]]) #select only the circular boundary
                         self.hdist_sample[j_i][i] = self.sample(self.hdist_sample[j_i][i], dat_temp, N_sample).astype(float)
 
-        self.load_sampledData(save=True)
+        if save:
+            self.load_sampledData(save=save)
 
     def get_linegrid(self):
         '''
