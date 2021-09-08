@@ -34,7 +34,7 @@ class IB(DL, TM, MA):
         self.truepst = [[[] for i in range(d)] for j in range(2)]
         self.estpst = [[[] for i in range(d)] for j in range(2)]
         self.clf = [[[] for i in range(d)] for j in range(2)]
-        self.mlps = [[[] for i in range(3)] for j in range(2)] # i=0: trained clf, i=1: posterior, i=2: hellinger
+        self.mlps = [[] for j in range(2)] # i=0: spiral, i=1: sxor
         self.hdist = None
         self.human = None
         seed = np.array([[],[],[]]).T
@@ -178,17 +178,48 @@ class IB(DL, TM, MA):
                 else:
                     self.clf[j][i] = self.train(**args)
 
-    def get_MLPs(self, param=None):
+    def get_MLPs(self, layers=[1,2,4,8], reps=126, param=None, save=False):
         '''
-        train new MLP classifier, get its posterior probabilty and hellinger distance from corresponding mathematical true poserior
+        train new MLP classifier with different number of hidden layers, get its posterior probabilty and hellinger distance from corresponding mathematical true poserior
 
+        layers: list, list of hidden layers to be tested
         param: dict, list of parameters for MLP (hidden_layer_sizes: tuple)
+        rep: int, number of repetitions (i.e. number of machines involved in the study)
+        save: bool, if true, saves as a pickle
         '''
 
-        for i, dt in enumerate([2,4]): #i=2: sprial, i=4: sxor
-            self.mlps[i][0].append(self.train_MLPs(param=param, dset=dt)) #clf
-            self.mlps[i][1].append(self.mlps[i][0][-1].predict_proba(self.mask)) #posterior
-            # self.mlps[i][2].append(self.compute_hellinger(estP=self.mlps[i][1][-1], trueP=self.truepst[dt], fast=True)) #hellinger
+        if self.humanLoc == []:
+            self.extract_human_coord()
+
+        if param == None:
+            param = self.clf
+
+        hidden = []
+
+        seed = np.array([[],[],[]]).T
+
+        self.mlps = [[seed for _ in range(len(layers))] for _ in range(2)]
+
+        for layer, layer_num in enumerate(tqdm(layers, desc='layer', leave=True)):
+            hidden = set([100] * layer_num)
+            # hidden.append(100) #add a layer of 100 neurons
+
+            for rep in tqdm(range(reps), desc='reps', leave=True):
+                self.get_dataset() #sampling at N=100 by default
+
+                # append estimate posterior and hellinger distance
+                for i, dt in enumerate([2,4]): #i=2: sprial, i=4: sxor
+                    temp_params = param[1][dt][1].get_params()
+                    temp_params['hidden_layer_sizes'] = hidden
+
+                    trained_clf = self.train_MLPs(param=temp_params, dset=dt) #clf (square/circle x dtype x mlp)
+                    trained_pst = trained_clf.predict_proba(self.humanLoc[i][rep].to_numpy()) #posterior
+
+                    dat_temp = np.column_stack([self.humanLoc[i][rep], trained_pst[:,1]]) #get the right posterior which should be consistent with get_proba()
+                    self.mlps[i][layer] = np.vstack([self.mlps[i][layer],dat_temp]).astype(float)
+
+        if save:
+            self.load_MLPs(save=save)
 
     def get_proba(self, human_idx=None):
         '''
@@ -276,7 +307,7 @@ class IB(DL, TM, MA):
             self.get_clf(param=saved_clf, fast=True)
             self.get_proba(rep) #if rep, exact coord match with human
             self.get_hellinger(fast=True, rep=rep)
-            
+
             # append estimate posterior and hellinger distance
             for j_i, j in enumerate([2,4]):
                 for i in range(len(self.mtype)):

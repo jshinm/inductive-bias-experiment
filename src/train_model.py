@@ -193,7 +193,7 @@ class trainModel:
             dset], self.Ctrain_y[dset], self.Ctest_X[dset], self.Ctest_y[dset]
 
         temp = MLPClassifier()
-        temp = temp.set_params(**param[cnt].get_params())
+        temp = temp.set_params(**param) #one-hot just for convenience
         temp.fit(train_X, train_y)
 
-        return post
+        return temp
