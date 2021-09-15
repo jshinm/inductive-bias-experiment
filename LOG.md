@@ -1,7 +1,10 @@
 # Log
 
+## 9/15/21
+- test the behavior of the oblique tree (SPORF/rerf)
+
 ## 9/06/21
-- test behavior of deeper MLP
+- test the behavior of deeper MLP
 
 ## 9/05/21
 - add vertical lines to differentiate extrapolative regions
