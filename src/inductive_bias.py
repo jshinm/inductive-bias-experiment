@@ -19,6 +19,8 @@ class IB(DL, TM, MA):
     def __init__(self):
 
         self.date = datetime.now()
+        self.clfPath = 'clf/'
+
         # list of ML models (SVC removed on 12/8/2020), (KNN/XGBoost removed on 12/9/2020)
         self.mtype = ['SVM', 'MLP', 'RF', 'QDA']
         self.dtype = ['Gaussian XOR', 'Uniform XOR', 'Spiral',

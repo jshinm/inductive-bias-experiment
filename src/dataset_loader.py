@@ -17,7 +17,7 @@ class datasetLoader:
         '''
         loads saved simulation dataset or saves current attributes as a pickle
         '''
-        CLFPATH = os.path.join(os.getcwd(), 'clf\\')
+        CLFPATH = os.path.join(os.getcwd(), self.clfPath)
         filename = CLFPATH + fname
 
         if os.path.exists(filename) and not save:
@@ -61,7 +61,7 @@ class datasetLoader:
         '''
         loads previously saved attributes from a pickle or saves current attributes as a pickle
         '''
-        CLFPATH = os.path.join(os.getcwd(), 'clf\\')
+        CLFPATH = os.path.join(os.getcwd(), self.clfPath)
         filename = CLFPATH + fname
 
         if os.path.exists(filename) and not save:
