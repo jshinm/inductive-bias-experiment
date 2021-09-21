@@ -15,6 +15,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 import xgboost as xgb
 
+from rerf.rerfClassifier import rerfClassifier
 
 class trainModel:
 
@@ -137,7 +138,7 @@ class trainModel:
         return post
         # plot_posterior(X, y, newX, newy, post, mods, savefile, h=h)
 
-    def fast_train(self, param, dset, enable=[0, 0, 1, 0, 1, 1], cc=False):
+    def fast_train(self, param, dset, enable=[0, 0, 1, 0, 1, 1, 1], cc=False):
 
         # mods = ['KNN', 'SVC', 'SVM', 'XGBoost', 'MLP', 'RF']  # local mods list
         post = []
@@ -166,16 +167,18 @@ class trainModel:
                     temp = MLPClassifier()
                 elif i == 5:
                     temp = RandomForestClassifier(n_jobs=-1)
+                elif i == 6:
+                    temp = rerfClassifier(n_jobs=-1)
 
                 temp = temp.set_params(**param[cnt].get_params())
                 temp.fit(train_X, train_y)
                 post.append(temp)
                 cnt += 1
 
-            if i == 5:
-                temp = QuadraticDiscriminantAnalysis()
-                temp.fit(train_X, train_y)
-                post.append(temp)
+            # if i == 5:
+            #     temp = QuadraticDiscriminantAnalysis()
+            #     temp.fit(train_X, train_y)
+            #     post.append(temp)
 
         return post
 
