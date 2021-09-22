@@ -23,7 +23,7 @@ class IB(DL, TM, MA):
 
         # list of ML models (SVC removed on 12/8/2020), (KNN/XGBoost removed on 12/9/2020)
         # self.mtype = ['SVM', 'MLP', 'RF', 'QDA'] #removed QDA on 9/20/2021
-        self.mtype = ['SVM', 'MLP', 'RF', 'HUMAN', 'SPORF']
+        self.mtype = ['SVM', 'MLP', 'RF', 'SPORF', 'MORF']
         self.dtype = ['Gaussian XOR', 'Uniform XOR', 'Spiral',
                       'Gaussian R-XOR', 'Gaussian S-XOR']  # list of datasets
 
@@ -166,15 +166,15 @@ class IB(DL, TM, MA):
                     for j in range(2)]  # reinitialize
 
         for j in tqdm(range(2), leave=False, desc='train clf'):
-            if j == 0: 
+            if j == 0:
                 continue #skipping unit square
 
-            for i in range(len(self.dtype)):
+            for i in [2,4]:#range(len(self.dtype)):
 
                 if j == 0:
-                    args = dict(param=param[j][i], dset=i, enable=[0, 0, 1, 0, 1, 1, 1], cc=False)
+                    args = dict(param=param[j][i], dset=i, enable=[0, 0, 1, 0, 1, 1, 1, 1], cc=False)
                 else:
-                    args = dict(param=param[j][i], dset=i, enable=[0, 0, 1, 0, 1, 1, 1], cc=True)
+                    args = dict(param=param[j][i], dset=i, enable=[0, 0, 1, 0, 1, 1, 1, 1], cc=True)
 
                 if fast:
                     self.clf[j][i] = self.fast_train(**args)
@@ -284,51 +284,51 @@ class IB(DL, TM, MA):
         '''
         return self.smooth_radial_distance(dat)
 
-    def get_sampledData(self, saved_clf, reps, N_sample, save=True, **kwargs):
-        '''
-        simulate human behavioral experiment setting on ML experiment by sampling 
-        'N_sample' number of points from each estimation for 'reps' number of repetition
+    # def get_sampledData(self, saved_clf, reps, N_sample, save=True, **kwargs):
+    #     '''
+    #     simulate human behavioral experiment setting on ML experiment by sampling 
+    #     'N_sample' number of points from each estimation for 'reps' number of repetition
 
-        saved_clf: load previously saved hyper-parameters of classifer (currently only for spiral and S-XOR)
-        reps: number of independent experiment
-        N_sample: number of sampled points
+    #     saved_clf: load previously saved hyper-parameters of classifer (currently only for spiral and S-XOR)
+    #     reps: number of independent experiment
+    #     N_sample: number of sampled points
 
-        output
-        ------
-        estpst_sample: N x 3 matrix in I X J multi-dimensional list where first two columns of the matrix are x,y coordinates and the third human estimates
-        hdist_sample: N x 3 matrix in I X J multi-dimensional list where first two columns of the matrix are x,y coordinates and the third human hellinger distance
-        '''
+    #     output
+    #     ------
+    #     estpst_sample: N x 3 matrix in I X J multi-dimensional list where first two columns of the matrix are x,y coordinates and the third human estimates
+    #     hdist_sample: N x 3 matrix in I X J multi-dimensional list where first two columns of the matrix are x,y coordinates and the third human hellinger distance
+    #     '''
 
-        seed = np.array([[],[],[]]).T
-        self.estpst_sample = [[seed for i in range(len(self.mtype))] for i in range(2)] #only for spiral and S-XOR
+    #     seed = np.array([[],[],[]]).T
+    #     self.estpst_sample = [[seed for i in range(len(self.mtype))] for i in range(2)] #only for spiral and S-XOR
 
-        self.get_posterior(**kwargs) #re-generate true posterior
+    #     self.get_posterior(**kwargs) #re-generate true posterior
 
-        for rep in tqdm(range(reps), desc='rep'):
+    #     for rep in tqdm(range(reps), desc='rep'):
 
-            self.get_dataset() #sampling at N=100 by default
-            self.get_clf(param=saved_clf, fast=True)
-            self.get_proba(rep) #if rep, exact coord match with human
-            self.get_hellinger(fast=True, rep=rep)
+    #         self.get_dataset() #sampling at N=100 by default
+    #         self.get_clf(param=saved_clf, fast=True)
+    #         self.get_proba(rep) #if rep, exact coord match with human
+    #         self.get_hellinger(fast=True, rep=rep)
 
-            # append estimate posterior and hellinger distance
-            for j_i, j in enumerate([2,4]):
-                for i in range(len(self.mtype)):
-                    if rep != None:
-                        dat_temp = np.column_stack([self.humanLoc[j_i][rep], self.estpst[1][j][i]]) #select only the circular boundary
-                        self.estpst_sample[j_i][i] = np.vstack([self.estpst_sample[j_i][i],dat_temp]).astype(float)
-                    else:
-                        dat_temp = np.column_stack([self.mask, self.estpst[1][j][i]]) #select only the circular boundary
-                        self.estpst_sample[j_i][i] = self.sample(self.estpst_sample[j_i][i], dat_temp, N_sample).astype(float)
+    #         # append estimate posterior and hellinger distance
+    #         for j_i, j in enumerate([2,4]):
+    #             for i in range(len(self.mtype)):
+    #                 if rep != None:
+    #                     dat_temp = np.column_stack([self.humanLoc[j_i][rep], self.estpst[1][j][i]]) #select only the circular boundary
+    #                     self.estpst_sample[j_i][i] = np.vstack([self.estpst_sample[j_i][i],dat_temp]).astype(float)
+    #                 else:
+    #                     dat_temp = np.column_stack([self.mask, self.estpst[1][j][i]]) #select only the circular boundary
+    #                     self.estpst_sample[j_i][i] = self.sample(self.estpst_sample[j_i][i], dat_temp, N_sample).astype(float)
 
-                    if rep != None: #exact coordinate method not implemented yet
-                        pass
-                    else:
-                        dat_temp = np.column_stack([self.mask, self.hdist[1][j][i]]) #select only the circular boundary
-                        self.hdist_sample[j_i][i] = self.sample(self.hdist_sample[j_i][i], dat_temp, N_sample).astype(float)
+    #                 if rep != None: #exact coordinate method not implemented yet
+    #                     pass
+    #                 else:
+    #                     dat_temp = np.column_stack([self.mask, self.hdist[1][j][i]]) #select only the circular boundary
+    #                     self.hdist_sample[j_i][i] = self.sample(self.hdist_sample[j_i][i], dat_temp, N_sample).astype(float)
 
-        if save:
-            self.load_sampledData(save=save)
+    #     if save:
+    #         self.load_sampledData(save=save)
 
     def get_sampledData(self, saved_clf, reps, N_sample, save=True, rerf=False, **kwargs):
         '''

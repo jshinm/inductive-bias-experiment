@@ -138,7 +138,7 @@ class trainModel:
         return post
         # plot_posterior(X, y, newX, newy, post, mods, savefile, h=h)
 
-    def fast_train(self, param, dset, enable=[0, 0, 1, 0, 1, 1, 1], cc=False):
+    def fast_train(self, param, dset, enable=[0, 0, 1, 0, 1, 1, 1, 1], cc=False):
 
         # mods = ['KNN', 'SVC', 'SVM', 'XGBoost', 'MLP', 'RF']  # local mods list
         post = []
@@ -168,7 +168,9 @@ class trainModel:
                 elif i == 5:
                     temp = RandomForestClassifier(n_jobs=-1)
                 elif i == 6:
-                    temp = rerfClassifier(n_jobs=-1)
+                    temp = rerfClassifier(projection_matrix='RerF', n_jobs=-1)
+                elif i == 7:
+                    temp = rerfClassifier(projection_matrix='MT-MORF', n_jobs=-1)
 
                 temp = temp.set_params(**param[cnt].get_params())
                 temp.fit(train_X, train_y)
