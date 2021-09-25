@@ -1,7 +1,12 @@
 # Log
 
+## 9/21/21
+- re-run machine behavior experiment with SPORF and MORF
+- add changes to the figure 3
+
 ## 9/15/21
-- test the behavior of the oblique tree (SPORF/rerf)
+- test the behavior of the oblique tree (SPORF)
+- add MORF from Adam Li's dev branch
 
 ## 9/06/21
 - test the behavior of deeper MLP
