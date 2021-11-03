@@ -15,7 +15,10 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 import xgboost as xgb
 
-from rerf.rerfClassifier import rerfClassifier
+try: #conditional import as rerf is only available in linux and mac
+    from rerf.rerfClassifier import rerfClassifier 
+except ImportError:
+    pass
 
 class trainModel:
 
