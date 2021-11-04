@@ -1,5 +1,9 @@
 # Log
 
+## 11/3/21
+- change to conditional importation of rerf package
+- change fontsize and make the figure legend static (20210518 notebook)
+
 ## 9/21/21
 - re-run machine behavior experiment with SPORF and MORF
 - add changes to the figure 3
