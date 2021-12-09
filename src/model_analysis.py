@@ -17,7 +17,7 @@ from scipy.stats import gaussian_kde
 from scipy.integrate import quad
 # from skimage.filters import gaussian
 
-from .dataset_generator import DatasetGenerator as DG
+from src import DG
 
 
 class modelAnalysis(DG):

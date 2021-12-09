@@ -8,8 +8,7 @@ import os
 import pickle
 import numpy as np
 from datetime import datetime
-from .dataset_generator import DatasetGenerator as DG
-
+from src import DG
 
 class datasetLoader:
 
