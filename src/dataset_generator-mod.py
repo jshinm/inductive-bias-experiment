@@ -202,28 +202,54 @@ class DatasetGenerator:
         # return p0-p1
         return p1/(p0+p1)
 
-    @staticmethod
-    def spiral_pdf(x, sig=0.25, rng=1, spirals=270):
-        '''
-        method that draws gaussian posterior at each spiral center
-        '''
-        x0, x1 = DatasetGenerator.spiral_center(spirals, K=2, rng=rng)
+    # @staticmethod
+    # def spiral_pdf(x, sig=0.25, rng=1, spirals=270):
+    #     '''
+    #     method that draws gaussian posterior at each spiral center
+    #     '''
+    #     x0, x1 = DatasetGenerator.spiral_center(spirals, K=2, rng=rng)
 
-        mu01 = x0
-        mu02 = x1
-        cov = sig * np.eye(2)
-        inv_cov = np.linalg.inv(cov)
+    #     mu01 = x0
+    #     mu02 = x1
+    #     cov = sig * np.eye(2)
+    #     inv_cov = np.linalg.inv(cov)
 
-        p0, p1 = 0, 0
-        for mu in mu01:
-            p0 += np.exp(-(x - mu)@inv_cov@(x-mu).T)
-        for mu in mu02:
-            p1 += np.exp(-(x - mu)@inv_cov@(x-mu).T)
+    #     p0, p1 = 0, 0
+    #     for mu in mu01:
+    #         p0 += np.exp(-(x - mu)@inv_cov@(x-mu).T)
+    #     for mu in mu02:
+    #         p1 += np.exp(-(x - mu)@inv_cov@(x-mu).T)
 
-        p0 = p0/(2*np.pi*np.sqrt(np.linalg.det(cov)))
-        p1 = p1/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+    #     p0 = p0/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+    #     p1 = p1/(2*np.pi*np.sqrt(np.linalg.det(cov)))
 
-        return p0/(p0+p1)
+    #     return p0/(p0+p1)
+
+    def spiral_pdf(X, n_samples, n_class=2, noise=0.3):
+        if n_class == 2:
+            turns = 2
+        elif n_class == 3:
+            turns = 2.5
+        elif n_class == 5:
+            turns = 3.5
+        elif n_class == 7:
+            turns = 4.5
+        else:
+            raise ValueError("sorry, can't currently surpport %s classes " % n_class)
+
+        theta = np.linspace(
+                0, np.pi * 4 * turns / n_class, int(n_samples / n_class)
+            ) 
+
+        likelihood = 0
+        x, y = X[:,0], X[:,1]
+        theta_ = np.arccos(x/np.sqrt(x**2 + y**2))
+        for t in theta:
+            likelihood += np.exp(
+                - (theta_ - t)**2/(2*noise)
+                )
+
+        return likelihood/(np.sqrt(2*np.pi)*noise)
 
     @staticmethod
     def true_spiral(h=0.01, sig=0.00008, rng=3, cc=False, spirals=270, **kwarg):
