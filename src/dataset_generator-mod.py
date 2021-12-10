@@ -6,6 +6,7 @@ Author: Jong M. Shin
 
 import numpy as np
 from scipy.stats import norm
+from scipy.stats import matrix_normal
 from tqdm import tqdm #compatible with jupyter after vscode update
 
 class DatasetGenerator:
@@ -229,6 +230,8 @@ class DatasetGenerator:
         '''
         method that generates true posterior for spiral dataset
         '''
+        norm = kwarg['norm']
+
         X = DatasetGenerator.generate_mask(rng=rng, h=h)
         z = np.zeros(len(X), dtype=float)
         z[:] = 0.5
@@ -247,7 +250,10 @@ class DatasetGenerator:
                     # print ('There is {} at {} {}'.format(nantest, ii, x))
                     pass
 
-        z = (z - min(z)) / (max(z) - min(z))
+        if norm:
+            z = (z - min(z)) / (max(z) - min(z))
+        else:
+            pass
 
         return X[:, 0], X[:, 1], z
 
@@ -267,6 +273,7 @@ class DatasetGenerator:
         r = np.linspace(0, rng, size)
         # r = np.sort(r)
         t = np.linspace(0, np.pi * 4 * rng, size)
+        
         dx = r * np.cos(t)
         dy = r * np.sin(t)
 
@@ -280,6 +287,9 @@ class DatasetGenerator:
         '''
         method that generates true posterior for xor datasets
         '''
+        norm = kwarg['norm']
+        newpdf = kwarg['newpdf']
+
         X = DatasetGenerator.generate_mask(rng=rng, h=h)
 
         z = np.zeros(len(X), dtype=float)
@@ -290,12 +300,138 @@ class DatasetGenerator:
             elif np.sqrt((x**2).sum(axis=0)) > 1 and cc == True:
                 z[ii] = 0.5
             else:
-                z[ii] = 1-DatasetGenerator.xor_pdf(x, rotate=rotate, sig=sig)
+                if newpdf:
+                    x = np.array([x.tolist()])
+                    z[ii] = 1-DatasetGenerator.pdf(x, cov_scale=sig)
+                else:
+                    z[ii] = 1-DatasetGenerator.xor_pdf(x, rotate=rotate, sig=sig)
             # z[ii] = 1-xor_pdf(x, rotate=rotate, sig=sig)
 
-        z = (z - min(z)) / (max(z) - min(z))
+        if norm:
+            z = (z - min(z)) / (max(z) - min(z))
+        else:
+            pass
 
         return X[:, 0], X[:, 1], z
+
+        # if rotate:
+        #     mu01 = np.array([-0.5, 0])
+        #     mu02 = np.array([0.5, 0])
+        #     mu11 = np.array([0, 0.5])
+        #     mu12 = np.array([0, -0.5])
+        # else:
+        #     mu01 = np.array([-0.5, 0.5])
+        #     mu02 = np.array([0.5, -0.5])
+        #     mu11 = np.array([0.5, 0.5])
+        #     mu12 = np.array([-0.5, -0.5])
+        # cov = sig * np.eye(2)
+        # inv_cov = np.linalg.inv(cov)
+
+        # p0 = (
+        #     np.exp(-(x - mu01)@inv_cov@(x-mu01).T)
+        #     + np.exp(-(x - mu02)@inv_cov@(x-mu02).T)
+        # )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+
+        # p1 = (
+        #     np.exp(-(x - mu11)@inv_cov@(x-mu11).T)
+        #     + np.exp(-(x - mu12)@inv_cov@(x-mu12).T)
+        # )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+
+    @staticmethod
+    def pdf1(x, cov_scale=0.25):
+        mu01 = np.array([-0.5,0.5])
+        mu02 = np.array([0.5,-0.5])
+        mu11 = np.array([0.5,0.5])
+        mu12 = np.array([-0.5,-0.5])
+        cov = cov_scale* np.eye(2)
+        inv_cov = np.linalg.inv(cov) 
+
+        p01 = (
+            np.exp(-0.5*(x - mu01)@inv_cov@(x-mu01).T) 
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        p02 = (
+            np.exp(-0.5*(x - mu02)@inv_cov@(x-mu02).T)
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        p11 = (
+            np.exp(-0.5*(x - mu11)@inv_cov@(x-mu11).T) 
+            # + np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        p12 = (
+            np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+
+        return (p11+p12)/(p01+p02+p11+p12)
+
+    @staticmethod
+    def pdf4(x, cov_scale=0.25):
+        mu01 = np.array([-0.5,0.5])
+        mu02 = np.array([0.5,-0.5])
+        mu11 = np.array([0.5,0.5])
+        mu12 = np.array([-0.5,-0.5])
+        cov = cov_scale* np.eye(2)
+        inv_cov = np.linalg.inv(cov) 
+
+        p01 = (
+            np.exp(-0.5*(x - mu01)@inv_cov@(x-mu01).T) 
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        p02 = (
+            np.exp(-0.5*(x - mu02)@inv_cov@(x-mu02).T)
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        p11 = (
+            np.exp(-0.5*(x - mu11)@inv_cov@(x-mu11).T) 
+            # + np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        p12 = (
+            np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+
+        return np.max([p01,p02])/(p01+p02+p11+p12)
+
+    @staticmethod
+    def pdf(x, cov_scale=0.25):
+        # added trace
+        mu01 = np.array([[-0.5,0.5]])
+        mu02 = np.array([[0.5,-0.5]])
+        mu11 = np.array([[0.5,0.5]])
+        mu12 = np.array([[-0.5,-0.5]])
+        cov = cov_scale* np.eye(2)
+        inv_cov = np.linalg.inv(cov)
+
+        p01 = matrix_normal.pdf(x, mean=mu01, colcov=cov)
+        p02 = matrix_normal.pdf(x, mean=mu02, colcov=cov)
+        p11 = matrix_normal.pdf(x, mean=mu11, colcov=cov)
+        p12 = matrix_normal.pdf(x, mean=mu12, colcov=cov)
+
+        # return np.max([p01,p02])/(p01+p02+p11+p12)
+        return (p01+p02)/(p01+p02+p11+p12)
+
+    @staticmethod
+    def pdf4(x, cov_scale=0.25):
+        # added trace
+        mu01 = np.array([-0.5,0.5])
+        mu02 = np.array([0.5,-0.5])
+        mu11 = np.array([0.5,0.5])
+        mu12 = np.array([-0.5,-0.5])
+        cov = cov_scale* np.eye(2)
+        inv_cov = np.linalg.inv(cov) 
+
+        matrix_normal.pdf(x, mean=mu01, colcov=cov)
+
+        p01 = (
+            np.exp(-0.5* np.trace( (x - mu01)@inv_cov@(x-mu01).T) )
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        p02 = (
+            np.exp(-0.5* np.trace( (x - mu02)@inv_cov@(x-mu02).T) )
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        p11 = (
+            np.exp(-0.5* np.trace( (x - mu11)@inv_cov@(x-mu11).T) )
+            + np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+        p12 = (
+            np.exp(-0.5* np.trace( (x - mu12)@inv_cov@(x-mu12).T))
+        )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
+
+        return np.max([p01,p02])/(p01+p02+p11+p12)
 
     @staticmethod
     def true_Uxor(rng=3, h=0.01, cc=False, **kwarg):
