@@ -1,4 +1,9 @@
 # Log
+## 1/26/22
+- generate a linear posterior estimate figure for KDG paper submission to ICML 2022
+
+## 1/18/22
+- add a notebook that preprosses new spiral posterior from external source
 
 ## 11/3/21
 - change to conditional importation of rerf package
