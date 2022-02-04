@@ -1,4 +1,7 @@
 # Log
+## 2/4/22
+- modify kdg figure (change color scheme, add colorbars, and minor style changes)
+
 ## 1/26/22
 - generate a linear posterior estimate figure for KDG paper submission to ICML 2022
 
