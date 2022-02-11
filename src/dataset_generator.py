@@ -362,37 +362,6 @@ class DatasetGenerator:
         # return np.max([p01,p02])/(p01+p02+p11+p12)
         return (p01+p02)/(p01+p02+p11+p12)
 
-    # @staticmethod
-    # def pdf(x, cov_scale=0.25):
-    # '''
-    # latest update by Jayanta
-    # '''
-    #     # added trace
-    #     mu01 = np.array([-0.5,0.5])
-    #     mu02 = np.array([0.5,-0.5])
-    #     mu11 = np.array([0.5,0.5])
-    #     mu12 = np.array([-0.5,-0.5])
-    #     cov = cov_scale* np.eye(2)
-    #     inv_cov = np.linalg.inv(cov) 
-
-    #     matrix_normal.pdf(x, mean=mu01, colcov=cov)
-
-    #     p01 = (
-    #         np.exp(-0.5* np.trace( (x - mu01)@inv_cov@(x-mu01).T) )
-    #     )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
-    #     p02 = (
-    #         np.exp(-0.5* np.trace( (x - mu02)@inv_cov@(x-mu02).T) )
-    #     )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
-    #     p11 = (
-    #         np.exp(-0.5* np.trace( (x - mu11)@inv_cov@(x-mu11).T) )
-    #         + np.exp(-0.5*(x - mu12)@inv_cov@(x-mu12).T)
-    #     )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
-    #     p12 = (
-    #         np.exp(-0.5* np.trace( (x - mu12)@inv_cov@(x-mu12).T))
-    #     )/(2*np.pi*np.sqrt(np.linalg.det(cov)))
-
-    #     return np.max([p01,p02])/(p01+p02+p11+p12)
-
     @staticmethod
     def true_Uxor(rng=3, h=0.01, cc=False, **kwarg):
         '''
