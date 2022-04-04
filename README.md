@@ -3,7 +3,7 @@ By Jong M. Shin et al at Johns Hopkins University
 > This is still work in progress
 
 # Conference
-This work has been [presented](posters/NAISys2022-poster.pdf) at NAISys 2022 in April.
+The work has been [presented](posters/NAISys2022-poster.pdf) at [NAISys 2022](https://meetings.cshl.edu/meetings.aspx?meet=NAISYS&year=22) on April 5-9 at Cold Spring Harbor Laboratory in New York, USA.
 
 # Introduction
 The neural network’s popularity as a universal approximator has relatively been a recent phenomenon since the first artificial intelligence (AI) winter. Its initial motivation as a model of human intelligence dramatically failed a sanity check by a simple nonlinearity 60 years ago. With the advent of deeper architecture to imitate biological neural connection, this concept has regained traction as a promising mode of creating machine intelligence. Despite a huge leap from a single layer perceptron, however, deep neural networks have also been subjected to inductive bias. In many cases, its ability to extrapolate falls behind its counterpart algorithms, and oftentimes, its performance is not even on par with that of humans.
